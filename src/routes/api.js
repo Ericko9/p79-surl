@@ -12,7 +12,7 @@ function getDbPath() {
 }
 
 var pathDB = getDbPath()
-var pathContributors = path.join(cwd(), 'src', 'database', 'contributors.json')
+var pathContributors = path.join(__dirname, 'database', 'contributors.json')
 
 var db
 try {
@@ -21,7 +21,12 @@ try {
     try { fs.writeFileSync(pathDB, '[]') } catch (e) {}
     db = '[]'
 }
-var contributors = fs.readFileSync(pathContributors, 'utf-8') || '[]'
+var contributors
+try {
+    contributors = fs.readFileSync(pathContributors, 'utf-8') || '[]'
+} catch (e) {
+    contributors = '[]'
+}
 db = JSON.parse(db)
 contributors = JSON.parse(contributors)
 

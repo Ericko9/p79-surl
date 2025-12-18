@@ -18,7 +18,7 @@ if (process.argv[2] == 'dev') {
   DEBUG = false
 }
 
-app.set('views', path.join('src', 'views'))
+app.set('views', path.join(__dirname, 'views'))
 app.set('view engine', 'ejs')
 app.set('json spaces', 2)
 
@@ -38,7 +38,7 @@ app.use(logger('dev'))
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 app.use(cookieParser())
-app.use(express.static(path.join('src', 'public')))
+app.use(express.static(path.join(__dirname, 'public')))
 
 app.use('/', webRouter)
 app.use('/api/v1', apiRouter)
