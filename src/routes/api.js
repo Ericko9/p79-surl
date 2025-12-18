@@ -6,14 +6,19 @@ var path = require('path')
 
 var { cwd }  = process
 
-var pathDB = path.join(cwd(), 'src', 'database', 'database.json')
+function getDbPath() {
+    if (process.env.VERCEL) return path.join('/tmp', 'database.json')
+    return path.join(cwd(), 'src', 'database', 'database.json')
+}
+
+var pathDB = getDbPath()
 var pathContributors = path.join(cwd(), 'src', 'database', 'contributors.json')
 
 var db
 try {
     db = fs.readFileSync(pathDB, 'utf-8') || '[]'
 } catch (e) {
-    fs.writeFileSync(pathDB, '[]')
+    try { fs.writeFileSync(pathDB, '[]') } catch (e) {}
     db = '[]'
 }
 var contributors = fs.readFileSync(pathContributors, 'utf-8') || '[]'
@@ -87,7 +92,7 @@ router.post('/url', function(req, res, next) {
 function saveToDB({ key, redirect_uri } = {}) {
     var data = { key, redirect_uri, count: 0 }
     db.push(data)
-    fs.writeFileSync(pathDB, JSON.stringify(db))
+    try { fs.writeFileSync(pathDB, JSON.stringify(db)) } catch (e) {}
     return new Promise(resolve => {
         resolve({
             data

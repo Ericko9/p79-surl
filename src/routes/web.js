@@ -5,12 +5,17 @@ var path = require('path')
 
 var { cwd }  = process
 
-var pathDB = path.join(cwd(),'src', 'database', 'database.json')
+function getDbPath() {
+    if (process.env.VERCEL) return path.join('/tmp', 'database.json')
+    return path.join(cwd(), 'src', 'database', 'database.json')
+}
+
+var pathDB = getDbPath()
 var db
 try {
     db = fs.readFileSync(pathDB, 'utf-8') || '[]'
 } catch (e) {
-    fs.writeFileSync(pathDB, '[]')
+    try { fs.writeFileSync(pathDB, '[]') } catch (e) {}
     db = '[]'
 }
 db = JSON.parse(db)
@@ -35,14 +40,18 @@ router.get('/contributors', function(req, res, next) {
     res.render('contributors')
 })
 
+router.get('/favicon.ico', function(req, res) {
+    res.status(204).end()
+})
+
 router.get('/:key', async function(req, res, next) {
     var { key } = req.params
 
-    pathDB = (cwd() + '/src/database/database.json')
+    pathDB = getDbPath()
     try {
         db = fs.readFileSync(pathDB, 'utf-8') || '[]'
     } catch (e) {
-        fs.writeFileSync(pathDB, '[]')
+        try { fs.writeFileSync(pathDB, '[]') } catch (e) {}
         db = '[]'
     }
     db = JSON.parse(db)
@@ -65,7 +74,7 @@ function updateCountUri({ key } = {}) {
         var index = db.findIndex(v => v.key == key)
         if (data) {
             db[index].count += 1
-            fs.writeFileSync(pathDB, JSON.stringify(db))
+            try { fs.writeFileSync(pathDB, JSON.stringify(db)) } catch (e) {}
             resolve()
         }
     })
