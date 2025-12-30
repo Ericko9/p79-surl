@@ -1,25 +1,28 @@
-var express = require('express')
-var fs = require('fs')
-var crypto = require('crypto')
-var router = express.Router()
-var path = require('path')
+var express = require('express');
+var fs = require('fs');
+var crypto = require('crypto');
+var router = express.Router();
+var path = require('path');
+const auth = require('../middlewares/auth');
 
-var { cwd }  = process
+var { cwd } = process;
 
 function getDbPath() {
-    if (process.env.VERCEL) return path.join('/tmp', 'database.json')
-    return path.join(cwd(), 'src', 'database', 'database.json')
+  if (process.env.VERCEL) return path.join('/tmp', 'database.json');
+  return path.join(cwd(), 'src', 'database', 'database.json');
 }
 
 var pathDB = getDbPath()
 var pathContributors = path.join(__dirname, 'database', 'contributors.json')
 
-var db
+var db;
 try {
-    db = fs.readFileSync(pathDB, 'utf-8') || '[]'
+  db = fs.readFileSync(pathDB, 'utf-8') || '[]';
 } catch (e) {
-    try { fs.writeFileSync(pathDB, '[]') } catch (e) {}
-    db = '[]'
+  try {
+    fs.writeFileSync(pathDB, '[]');
+  } catch (e) {}
+  db = '[]';
 }
 var contributors
 try {
@@ -30,90 +33,111 @@ try {
 db = JSON.parse(db)
 contributors = JSON.parse(contributors)
 
-router.get('/', function(req, res, next) {
-    res.status(200).json({
-        message: 'Hello world!'
-    })
-})
+router.get('/', function (req, res, next) {
+  res.status(200).json({
+    message: 'Hello world!',
+  });
+});
 
-router.get('/contributors', function(req, res, next) {
-    res.status(200).json({
-        contributors
-    })
-})
+router.get('/contributors', function (req, res, next) {
+  res.status(200).json({
+    contributors,
+  });
+});
 
-router.post('/url', function(req, res, next) {
-    var { url, custom_key } = req.body
-    var key = crypto.randomBytes(4).toString('hex')
-    if (custom_key) key = custom_key
-    if (/\d/g.test(key[0])) key = randomAlphabet()+key
-    if (!custom_key) custom_key = null
-    if (!url) {
-        res.status(400).json({
-            status: false,
-            message: 'url is required'
-        })
-    }
-    if (url) url = !(url.startsWith('http://') || url.startsWith('https://')) ? 'http://' + url : url
+router.post('/url', function (req, res, next) {
+  var { url, custom_key } = req.body;
+  var key = crypto.randomBytes(4).toString('hex');
+  if (custom_key) key = custom_key;
+  if (/\d/g.test(key[0])) key = randomAlphabet() + key;
+  if (!custom_key) custom_key = null;
+  if (!url) {
+    res.status(400).json({
+      status: false,
+      message: 'url is required',
+    });
+  }
+  if (url)
+    url = !(url.startsWith('http://') || url.startsWith('https://'))
+      ? 'http://' + url
+      : url;
 
-    var regex = /^[\d]|\W/g
-    var validate_url = validateUrl({ url: url })
-    var validateKey = regex.test(key)
+  var regex = /^[\d]|\W/g;
+  var validate_url = validateUrl({ url: url });
+  var validateKey = regex.test(key);
 
-    if (validate_url) {
-        var redirect_uri = url
-        var result = {
-            key,
-            redirect_uri,
-        }
+  if (validate_url) {
+    var redirect_uri = url;
+    var result = {
+      key,
+      redirect_uri,
+    };
 
-        var collectKey = db.map(({ key }) => key)
-        if (collectKey.includes(key)) {
-            res.status(400).json({
-                status: false,
-                message: 'key already exists'
-            })
-        } else if (validateKey) {
-            res.status(400).json({
-                status: false,
-                message: `missing key`
-            })
-        } else {
-            saveToDB(result).then(({ data }) => {
-                res.status(200).json({
-                    status: true,
-                    data
-                })
-            })
-        }
+    var collectKey = db.map(({ key }) => key);
+    if (collectKey.includes(key)) {
+      res.status(400).json({
+        status: false,
+        message: 'key already exists',
+      });
+    } else if (validateKey) {
+      res.status(400).json({
+        status: false,
+        message: `missing key`,
+      });
     } else {
-        res.status(400).json({
-            status: false,
-            message: 'missing url'
-        })
+      saveToDB(result).then(({ data }) => {
+        res.status(200).json({
+          status: true,
+          data,
+        });
+      });
     }
-})
+  } else {
+    res.status(400).json({
+      status: false,
+      message: 'missing url',
+    });
+  }
+});
 
 function saveToDB({ key, redirect_uri } = {}) {
-    var data = { key, redirect_uri, count: 0 }
-    db.push(data)
-    try { fs.writeFileSync(pathDB, JSON.stringify(db)) } catch (e) {}
-    return new Promise(resolve => {
-        resolve({
-            data
-        })
-    })
+  var data = { key, redirect_uri, count: 0 };
+  db.push(data);
+  try {
+    fs.writeFileSync(pathDB, JSON.stringify(db));
+  } catch (e) {}
+  return new Promise((resolve) => {
+    resolve({
+      data,
+    });
+  });
 }
 
 function validateUrl({ url } = {}) {
-    var regex = /((?:(?:http?|ftp)[s]*:\/\/)?[a-z0-9-%\/\&=?\.]+\.[a-z]{2,4}\/?([^\s<>\#%"\,\{\}\\|\\\^\[\]`]+)?)/i
-    return regex.test(url)
+  var regex =
+    /((?:(?:http?|ftp)[s]*:\/\/)?[a-z0-9-%\/\&=?\.]+\.[a-z]{2,4}\/?([^\s<>\#%"\,\{\}\\|\\\^\[\]`]+)?)/i;
+  return regex.test(url);
 }
 
 function randomAlphabet() {
-    var alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('')
-    var random = alphabet[Math.floor(Math.random() * alphabet.length)]
-    return random
+  var alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
+  var random = alphabet[Math.floor(Math.random() * alphabet.length)];
+  return random;
 }
 
-module.exports = router
+// AUTHENTICATION & AUTHORIZATION
+const authController = require('../controllers/auth.controller');
+
+router.post('/auth/register', authController.register);
+router.post('/auth/login', authController.login);
+router.post('/auth/logout', authController.logout);
+
+// USER MANAGEMENT
+const userController = require('../controllers/user.controller');
+
+router.get('/users/profile', auth, userController.getProfile);
+router.put('/users/update-user', auth, userController.updateProfile);
+router.put('/users/change-password', auth, userController.changePassword);
+router.delete('/users/delete-user', auth, userController.deleteUser);
+
+module.exports = router;
