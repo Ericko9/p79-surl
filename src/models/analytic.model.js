@@ -1,8 +1,7 @@
 const { sqliteTable, text, index } = require('drizzle-orm/sqlite-core');
-const { sql } = require('drizzle-orm');
 const { links } = require('./link.model');
 
-// Definisi tabel 'analytics'
+// definisi tabel 'analytics'
 const analytics = sqliteTable(
   'analytics',
   {
@@ -15,7 +14,7 @@ const analytics = sqliteTable(
     os: text('os'),
     referrer: text('referrer'),
     city: text('city'),
-    accessedAt: text('accessed_at').default(sql`(CURRENT_TIMESTAMP)`),
+    accessedAt: text('accessed_at').$defaultFn(() => new Date().toISOString()),
   },
   (table) => ({
     linkIdx: index('idx_analytics_link').on(table.linkId),

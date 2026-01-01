@@ -1,18 +1,30 @@
 const { sqliteTable, text, integer } = require('drizzle-orm/sqlite-core');
-const { sql } = require('drizzle-orm');
+const { relations } = require('drizzle-orm');
 const { users } = require('./user.model');
 
-// Definisi tabel 'links'
+// definisi tabel 'links'
 const links = sqliteTable('links', {
   id: text('id').primaryKey(),
-  userId: text('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
+  userId: text('user_id').references(() => users.id, { onDelete: 'set null' }),
   shortKey: text('short_key').notNull().unique(),
   redirectUri: text('redirect_uri').notNull(),
   isCustom: integer('is_custom', { mode: 'boolean' }).default(false),
   clickCount: integer('click_count').default(0),
-  createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`),
+  createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
+  updatedAt: text('updated_at').$defaultFn(() => new Date().toISOString()),
 });
 
 module.exports = { links };
+
+const { linkRules } = require('./rule.model');
+
+// tambah mapping ke linkRules
+const linksRelations = relations(links, ({ one }) => ({
+  // relasi 1 to 1
+  rules: one(linkRules, {
+    fields: [links.id],
+    references: [linkRules.linkId],
+  }),
+}));
+
+module.exports.linksRelations = linksRelations;
