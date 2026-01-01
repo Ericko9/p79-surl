@@ -8,6 +8,7 @@ const path = require('path');
 const cors = require('cors');
 const logger = require('morgan');
 const cookieParser = require('cookie-parser');
+const globalErrorHandler = require('./middlewares/error.middleware');
 
 const app = express();
 
@@ -18,9 +19,9 @@ if (process.argv[2] == 'dev') {
   DEBUG = false;
 }
 
-app.set('views', path.join(__dirname, 'views'))
-app.set('view engine', 'ejs')
-app.set('json spaces', 2)
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
+app.set('json spaces', 2);
 
 app.use(cors({ origin: '*' }));
 
@@ -36,14 +37,15 @@ if (!DEBUG) {
   );
 }
 
-app.use(logger('dev'))
-app.use(express.json())
-app.use(express.urlencoded({ extended: false }))
-app.use(cookieParser())
-app.use(express.static(path.join(__dirname, 'public')))
+app.use(logger('dev'));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', webRouter);
 app.use('/api/v1', apiRouter);
+app.use(globalErrorHandler);
 
 app.use(function (req, res, next) {
   next(createError(404));

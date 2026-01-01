@@ -3,7 +3,9 @@ var fs = require('fs');
 var crypto = require('crypto');
 var router = express.Router();
 var path = require('path');
-const auth = require('../middlewares/auth');
+const auth = require('../middlewares/auth.middleware');
+const optionalAuth = require('../middlewares/optional-auth.middleware');
+const linkOwnership = require('../middlewares/ownership-link.middleware');
 
 var { cwd } = process;
 
@@ -12,8 +14,8 @@ function getDbPath() {
   return path.join(cwd(), 'src', 'database', 'database.json');
 }
 
-var pathDB = getDbPath()
-var pathContributors = path.join(__dirname, 'database', 'contributors.json')
+var pathDB = getDbPath();
+var pathContributors = path.join(__dirname, 'database', 'contributors.json');
 
 var db;
 try {
@@ -24,14 +26,14 @@ try {
   } catch (e) {}
   db = '[]';
 }
-var contributors
+var contributors;
 try {
-    contributors = fs.readFileSync(pathContributors, 'utf-8') || '[]'
+  contributors = fs.readFileSync(pathContributors, 'utf-8') || '[]';
 } catch (e) {
-    contributors = '[]'
+  contributors = '[]';
 }
-db = JSON.parse(db)
-contributors = JSON.parse(contributors)
+db = JSON.parse(db);
+contributors = JSON.parse(contributors);
 
 router.get('/', function (req, res, next) {
   res.status(200).json({
@@ -139,5 +141,24 @@ router.get('/users/profile', auth, userController.getProfile);
 router.put('/users/update-user', auth, userController.updateProfile);
 router.put('/users/change-password', auth, userController.changePassword);
 router.delete('/users/delete-user', auth, userController.deleteUser);
+
+// LINK MANAGEMENT
+const linkController = require('../controllers/link.controller');
+
+router.post('/links/create', optionalAuth, linkController.createLink);
+router.get('/links/my-links', auth, linkController.getMyLinks);
+router.get(
+  '/links/:id/detail',
+  auth,
+  linkOwnership,
+  linkController.getLinkDetail
+);
+router.put('/links/:id/update', auth, linkOwnership, linkController.updateLink);
+router.delete(
+  '/links/:id/delete',
+  auth,
+  linkOwnership,
+  linkController.deleteLink
+);
 
 module.exports = router;
