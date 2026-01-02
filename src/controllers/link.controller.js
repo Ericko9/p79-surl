@@ -39,11 +39,20 @@ const createLink = asyncHandler(async (req, res) => {
 const getMyLinks = asyncHandler(async (req, res) => {
   const userId = req.user.id;
 
+  // get field page, search,, startDate, dan endDate
+  const { page, search, startDate, endDate } = req.query;
+
   // call getUserLinks service
-  const rawData = await linkService.getUserLinks(userId);
+  const rawData = await linkService.getUserLinks(userId, {
+    page: parseInt(page) || 1,
+    limit: 10,
+    search,
+    startDate,
+    endDate,
+  });
 
   // mapping response data
-  const formattedData = rawData.map((link) => ({
+  const formattedData = rawData.data.map((link) => ({
     id: link.id,
     short_key: link.shortKey,
     redirect_uri: link.redirectUri,
@@ -54,6 +63,7 @@ const getMyLinks = asyncHandler(async (req, res) => {
   return res.status(200).json({
     status: true,
     data: formattedData,
+    pagination: rawData.pagination, // metadata pagination
   });
 });
 

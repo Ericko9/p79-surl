@@ -1,5 +1,5 @@
 const db = require('../configs/database');
-const { sql, eq, and, desc, ne } = require('drizzle-orm');
+const { sql, eq, and, desc, ne, like, gte, lte } = require('drizzle-orm');
 const { links, linkRules } = require('../models/index');
 const crypto = require('crypto');
 const { normalizeUrl } = require('../utils/link-formatter');
@@ -79,22 +79,51 @@ const createLink = async (userId, payload) => {
 };
 
 // GET ALL USER LINK
-const getUserLinks = async (userId) => {
+const getUserLinks = async (userId, filters = {}) => {
   // cek field userId
   if (!userId) throw new AppError('User ID is Required!', 400);
 
-  // get data daftar link dari db
-  return await db
-    .select({
-      id: links.id,
-      shortKey: links.shortKey,
-      redirectUri: links.redirectUri,
-      clickCount: links.clickCount,
-      createdAt: links.createdAt,
-    })
+  // cek filter
+  const { page = 1, limit = 10, search, startDate, endDate } = filters;
+  const offset = (page - 1) * limit;
+
+  // kondisi query dinamis
+  const conditions = [eq(links.userId, userId)];
+
+  if (search) {
+    conditions.push(like(links.shortKey, `%${search}%`)); // find by shortKey
+  }
+
+  if (startDate && endDate) {
+    conditions.push(
+      and(gte(links.createdAt, startDate), lte(links.createdAt, endDate))
+    ); // find by date
+  }
+
+  // get data dengan limit dan offset dari db
+  const data = await db
+    .select()
     .from(links)
-    .where(eq(links.userId, userId))
-    .orderBy(desc(links.createdAt));
+    .where(and(...conditions))
+    .orderBy(desc(links.createdAt))
+    .limit(limit)
+    .offset(offset);
+
+  // count total data untuk pagination
+  const totalCount = await db
+    .select({ count: sql`count(*)` })
+    .from(links)
+    .where(and(...conditions));
+
+  return {
+    data,
+    pagination: {
+      total_data: totalCount[0].count,
+      total_pages: Math.ceil(totalCount[0].count / limit),
+      current_page: parseInt(page),
+      limit: limit,
+    },
+  };
 };
 
 // GET LINK DETAIL
