@@ -1,60 +1,265 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <%- include('./partials/head') -%>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shorten Your Links - URL Shortener</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-      .starter-template {
-        padding: 3rem 1.5rem;
-        text-align: center;
-      }
-      .footer {
-        background-color: #f5f5f5;
-      }
-      .bd-placeholder-img {
-        font-size: 1.125rem;
-        text-anchor: middle;
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
-      }
-
-      @media (min-width: 768px) {
-        .bd-placeholder-img-lg {
-          font-size: 3.5rem;
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
         }
-      }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .animate-pulse-bg {
+            animation: pulse 15s ease-in-out infinite;
+        }
     </style>
-  </head>
-  <body class="bg-light">
-    <%- include('./partials/navbar', { dashboard: true, shortens: false, about: false, community: false, contributors: false }) -%>
-    <main role="main" class="container">
-      <%- include('./partials/brand') -%>
-      <div class="row">
-        <div class="col mt-2 order-md-2 mb-2 justify-content-center align-items-center">
-          <div class="card p-4">
-            <div class="lead d-flex justify-content-center">Paste the URL to be shortened</div>
-            <div class="input-group p-2">
-              <input type="text" class="form-control" id="url" placeholder="Your long url" />
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <%- include('./partials/navbar', { dashboard: false, shortens: false, about: true, community: false, contributors: false }) -%>
+    <main role="main" class="container mx-auto px-4 max-w-6xl pt-16 md:pt-16">
+        <%- include('./partials/hero') -%>
+        <!-- Features Section -->
+        <div class="mt-7 mb-12 p-8 md:p-12 max-w-6xl mx-auto">
+            <div class="mb-12">
+                <h2 class="text-blue-600 text-3xl md:text-4xl font-bold mb-3">
+                    Access more features!
+                </h2>
+                <p class="text-gray-600 text-base md:text-lg">
+                    Create, shorten URL and custom QR codes in seconds, track your engagement with built-in analytics.
+                </p>
             </div>
-            <div class="input-group mt-2 mb-2 p-2">
-              <div class="input-group-prepend">
-                <div class="input-group-text">
-                  <input type="checkbox" />
-                </div>
-              </div>
-              <input type="text" class="form-control" id="custom_key" placeholder="Check to customize your link" disabled="disabled" />
-            </div>
-            <div class="button p-2">
-              <button type="submit" class="btn btn-primary" id="shorten">Go Short!</button>
-            </div>
-          </div>
-          <%- include('./partials/error') -%> <%- include('./partials/result') -%>
-        </div>
-      </div>
 
-      <%- include('./partials/recent_shortens') -%>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10 px-4 md:px-8">
+                <!-- Feature 1: Custom Short Links -->
+                <div class="hover:-translate-y-2 transition-transform duration-300">
+                    <div class="mx-auto mb-6 flex items-center justify-center">
+                        <img src='/Images/Image7.png' class="w-[350px] h-[250px]"/>
+                    </div>
+                    <h3 class="text-gray-900 font-semibold text-lg">Custom Short Links</h3>
+                    <p class="text-gray-600 text-[12px] leading-relaxed">
+                        Create memorable and branded links that make it easy to share and click.
+                    </p>
+                </div>
+
+                <!-- Feature 2: Instant QR Codes -->
+                <div class="hover:-translate-y-2 transition-transform duration-300">
+                    <div class="mx-auto mb-6 flex items-center justify-center">
+                      <img src="/images/Image6.png" class="w-[350px] h-[250px]"/>
+                    </div>
+                    <h3 class="text-gray-900 font-semibold text-lg">Instant QR Codes</h3>
+                    <p class="text-gray-600 text-[12px] leading-relaxed">
+                      Generate high-quality QR codes for your links to bridge offline and online traffic.                
+                    </p>
+                </div>
+
+                <!-- Feature 3: Real-time Analytics -->
+                <div class="hover:-translate-y-2 transition-transform duration-300">
+                    <div class="mx-auto mb-6 flex items-center justify-center">
+                        <img src="/images/Image5.png" class="w-[350px] h-[250px]"/>
+                    </div>
+                    <h3 class="text-gray-900 font-semibold text-lg">Real-time Analytics</h3>
+                    <p class="text-gray-600 text-[12px] leading-relaxed">
+                      Track clicks, geographic data, and referral sources to optimize your reach.
+                    </p>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <button 
+                    onclick="window.location.href='/login'"
+                    class="bg-gradient-to-r from-blue-600 to-blue-800 text-white px-8 py-3 rounded-full font-semibold hover:from-blue-700 hover:to-blue-900 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5 inline-flex items-center gap-2"
+                >
+                    Full features access
+                    <span class="flex items-center justify-center w-5 h-5 bg-white rounded-full">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="w-3 h-3 text-[#0B78D1]"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path d="M5 12h12" />
+                        <path d="M13 6l6 6-6 6" />
+                      </svg>
+                    </span>
+                </button>
+            </div>
+        </div>
+        <%- include('./partials/footer') -%>
+
     </main>
-    <%- include('./partials/script') -%>
-  </body>
+
+    <script>
+        let isShortened = false;
+
+        // Toggle Custom Alias Field
+        document.getElementById('customizeLink').addEventListener('change', function() {
+            const customAliasField = document.getElementById('customAliasField');
+            if (this.checked) {
+                customAliasField.classList.remove('hidden');
+            } else {
+                customAliasField.classList.add('hidden');
+            }
+        });
+
+        // URL Validation
+        document.getElementById('destinationUrl').addEventListener('input', function() {
+            const urlError = document.getElementById('urlError');
+            const url = this.value.trim();
+            
+            if (url && !url.match(/^https?:\/\/.+/)) {
+                urlError.classList.remove('hidden');
+            } else {
+                urlError.classList.add('hidden');
+            }
+        });
+
+        // Show Alert Message
+        function showAlert(message, type = 'error') {
+            const alertMessage = document.getElementById('alertMessage');
+            alertMessage.textContent = message;
+            
+            if (type === 'success') {
+                alertMessage.className = 'mb-4 p-4 rounded-xl text-center font-medium bg-green-100 text-green-700 border-2 border-green-300';
+            } else {
+                alertMessage.className = 'mb-4 p-4 rounded-xl text-center font-medium bg-red-100 text-red-700 border-2 border-red-300';
+            }
+            
+            alertMessage.classList.remove('hidden');
+            
+            // Auto hide after 5 seconds
+            setTimeout(() => {
+                alertMessage.classList.add('hidden');
+            }, 5000);
+        }
+
+        // Form Submit Handler
+        document.getElementById('shortenForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const url = document.getElementById('destinationUrl').value.trim();
+            const customAlias = document.getElementById('customAlias').value.trim();
+            const urlError = document.getElementById('urlError');
+            const submitBtn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            const btnIcon = document.getElementById('btnIcon');
+            const destinationUrl = document.getElementById('destinationUrl');
+            const customAliasInput = document.getElementById('customAlias');
+            
+            // Validate URL
+            if (!url.match(/^https?:\/\/.+/)) {
+                urlError.classList.remove('hidden');
+                return;
+            }
+            
+            urlError.classList.add('hidden');
+            
+            if (!isShortened) {
+                // Disable button during request
+                submitBtn.disabled = true;
+                btnText.textContent = 'Shortening...';
+                
+                // Prepare payload
+                const payload = {
+                    redirect_uri: url
+                };
+                
+                // Add custom_key only if provided
+                if (document.getElementById('customizeLink').checked && customAlias) {
+                    payload.custom_key = customAlias;
+                }
+                
+                try {
+                    const res = await fetch('/api/v1/links/create', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    const data = await res.json();
+                    
+                    if (res.ok && data.data) {
+                        // Show success
+                        showAlert('Link shortened successfully! 🎉', 'success');
+                        
+                        // Display shortened URL
+                        const shortUrl = `${window.location.origin}/${data.data.short_key}`;
+                        document.getElementById('shortenedUrl').value = shortUrl;
+                        document.getElementById('shortenedResult').classList.remove('hidden');
+                        
+                        // Update button
+                        btnText.textContent = 'Shorten Link Again';
+                        submitBtn.className = 'w-full px-6 py-3.5 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2';
+                        submitBtn.style.backgroundColor = '#DBF2F3';
+                        submitBtn.style.color = '#0891B2';
+                        
+                        // Change icon to reload
+                        btnIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>';
+                        
+                        // Disable input fields
+                        destinationUrl.disabled = true;
+                        customAliasInput.disabled = true;
+                        
+                        isShortened = true;
+                    } else {
+                        showAlert(data.message || 'Failed to shorten URL. Please try again.', 'error');
+                    }
+                } catch (error) {
+                    showAlert('Network error. Please check your connection and try again.', 'error');
+                    console.error('Error:', error);
+                } finally {
+                    submitBtn.disabled = false;
+                    if (!isShortened) {
+                        btnText.textContent = 'Shorten Link';
+                    }
+                }
+            } else {
+                // Reset form
+                document.getElementById('shortenedResult').classList.add('hidden');
+                destinationUrl.value = '';
+                customAliasInput.value = '';
+                btnText.textContent = 'Shorten Link';
+                
+                // Reset button style
+                submitBtn.className = 'w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3.5 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2';
+                submitBtn.style.backgroundColor = '';
+                submitBtn.style.color = '';
+                
+                // Reset icon to sparkle
+                btnIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>';
+                
+                // Enable input fields
+                destinationUrl.disabled = false;
+                customAliasInput.disabled = false;
+                
+                isShortened = false;
+            }
+        });
+
+        // Copy to Clipboard
+        function copyToClipboard() {
+            const shortenedUrl = document.getElementById('shortenedUrl');
+            shortenedUrl.select();
+            document.execCommand('copy');
+            
+            showAlert('Link copied to clipboard! 📋', 'success');
+        }
+    </script>
+</body>
 </html>
