@@ -9,6 +9,7 @@ const cors = require('cors');
 const logger = require('morgan');
 const cookieParser = require('cookie-parser');
 const globalErrorHandler = require('./middlewares/error.middleware');
+const AppError = require('./utils/AppError');
 
 const app = express();
 
@@ -43,21 +44,14 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', webRouter);
 app.use('/api/v1', apiRouter);
+app.use('/', webRouter);
+
+app.use((req, res, next) => {
+  next(new AppError(`Page not found: ${req.originalUrl}`, 404));
+});
+
 app.use(globalErrorHandler);
-
-app.use(function (req, res, next) {
-  next(createError(404));
-});
-
-app.use(function (err, req, res, next) {
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-  res.status(err.status || 500);
-  res.render('error');
-});
 
 const server = createServer(app);
 
