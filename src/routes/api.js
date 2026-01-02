@@ -80,6 +80,7 @@ router.delete(
   linkOwnership,
   linkController.deleteLink
 );
+router.post('/links/:id/generate-qr', auth, linkController.generateQr);
 
 // MAILER MANAGEMENT
 const mailerController = require('../controllers/mailer.controller');
