@@ -74,11 +74,12 @@
             <div class="border-t my-1"></div>
         
             <a
-              href="/logout"
-              class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-            >
-              Logout
-            </a>
+            href="#"
+            id="logoutBtn"
+            class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+          >
+            Logout
+          </a>
           </div>
         </div>
       </div>
@@ -336,4 +337,34 @@
       langText.textContent = savedLang === 'en' ? 'English' : 'Indonesia';
     }
   })();
+</script>
+<script>
+  document.getElementById('logoutBtn').addEventListener('click', async function (e) {
+    e.preventDefault();
+
+    try {
+      const response = await fetch('http://localhost:8000/api/v1/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + localStorage.getItem('token') // jika pakai token
+        }
+      });
+
+      const result = await response.json();
+
+      if (result.status === true) {
+        // hapus token
+        localStorage.removeItem('token');
+
+        // redirect ke login
+        window.location.href = '/login';
+      } else {
+        alert('Logout gagal');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Terjadi kesalahan saat logout');
+    }
+  });
 </script>
