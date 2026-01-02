@@ -54,6 +54,14 @@ router.get('/register', function(req, res, next) {
     res.render('register')
 })
 
+router.get('/index', function(req, res, next) {
+  res.render('dashboard')
+})
+
+router.get('/link', function(req, res, next) {
+  res.render('link')
+})
+
 const linkController = require('../controllers/link.controller');
 
 router.get('/:shortKey', linkController.redirect);
@@ -97,9 +105,6 @@ router.post('/register', async (req, res) => {
     }
   })
 
-router.get('/index', function(req, res, next) {
-    res.render('registerflow')
-})
 
 
 router.get('/:key', async function(req, res, next) {
