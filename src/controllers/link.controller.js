@@ -8,6 +8,7 @@ const asyncHandler = require('express-async-handler');
     4. Update Link
     5. Delete Link
     6. Handle Redirect
+    7. Generate QR
 */
 
 const createLink = asyncHandler(async (req, res) => {
@@ -146,6 +147,23 @@ const redirect = asyncHandler(async (req, res) => {
   res.redirect(redirectUri);
 });
 
+const generateQr = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const linkId = req.params.id;
+
+  // call generateQrCode service
+  const qrData = await linkService.generateQrCode(userId, linkId);
+
+  return res.status(200).json({
+    status: true,
+    data: {
+      is_generated: true,
+      image: qrData.image_path,
+      generated_at: qrData.created_at,
+    },
+  });
+});
+
 module.exports = {
   createLink,
   getMyLinks,
@@ -153,4 +171,5 @@ module.exports = {
   updateLink,
   deleteLink,
   redirect,
+  generateQr,
 };

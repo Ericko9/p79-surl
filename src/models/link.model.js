@@ -17,6 +17,7 @@ const links = sqliteTable('links', {
 module.exports = { links };
 
 const { linkRules } = require('./rule.model');
+const { linkQrCodes } = require('./qr-code.model');
 
 // tambah mapping ke linkRules
 const linksRelations = relations(links, ({ one }) => ({
@@ -24,6 +25,10 @@ const linksRelations = relations(links, ({ one }) => ({
   rules: one(linkRules, {
     fields: [links.id],
     references: [linkRules.linkId],
+  }),
+  qrCode: one(linkQrCodes, {
+    fields: [links.id],
+    references: [linkQrCodes.linkId],
   }),
 }));
 

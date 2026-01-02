@@ -1,12 +1,15 @@
 const db = require('../configs/database');
 const { sql, eq, and, desc, ne, like, gte, lte } = require('drizzle-orm');
-const { links, linkRules } = require('../models/index');
+const { links, linkRules, linkQrCodes } = require('../models/index');
 const crypto = require('crypto');
 const { normalizeUrl } = require('../utils/link-formatter');
 const {
   checkUrlValidity,
   validateKeyFormat,
 } = require('../utils/link-validator');
+const { randomUUID } = require('node:crypto');
+const QRCode = require('qrcode');
+const cloudinary = require('../configs/storage');
 const AppError = require('../utils/AppError');
 
 // CREATE A NEW SHORT LINK
@@ -326,6 +329,59 @@ const getRedirectUrl = async (shortKey) => {
   return link.redirectUri;
 };
 
+// GENERATE QR CODE
+const generateQrCode = async (userId, linkId) => {
+  // find link di db (link harus exist)
+  const [linkData] = await db
+    .select()
+    .from(links)
+    .where(and(eq(links.id, linkId), eq(links.userId, userId)))
+    .limit(1);
+
+  if (!linkData) throw new AppError('Link not found or unauthorized', 404);
+
+  // cek apakah qr sudah pernah dibuat
+  const [existingQr] = await db
+    .select()
+    .from(linkQrCodes)
+    .where(eq(linkQrCodes.linkId, linkId))
+    .limit(1);
+
+  if (existingQr) {
+    return {
+      image_path: existingQr.imagePath,
+      is_generated: existingQr.isGenerated,
+      created_at: existingQr.createdAt,
+    };
+  }
+
+  // generate qr & Upload image
+  const fullUrl = `${process.env.BASE_URL}/${linkData.shortKey}`;
+  const qrBase64 = await QRCode.toDataURL(fullUrl);
+
+  const uploadRes = await cloudinary.uploader.upload(qrBase64, {
+    folder: 'shortlink_qr',
+    public_id: `qr_${linkData.shortKey}`,
+  });
+
+  // insert data ke db
+  const [insertedQr] = await db
+    .insert(linkQrCodes)
+    .values({
+      id: randomUUID(),
+      linkId,
+      imagePath: uploadRes.secure_url,
+      isGenerated: true,
+    })
+    .returning();
+
+  return {
+    image_path: insertedQr.imagePath,
+    is_generated: insertedQr.isGenerated,
+    created_at: insertedQr.createdAt,
+  };
+};
+
 module.exports = {
   createLink,
   getUserLinks,
@@ -333,4 +389,5 @@ module.exports = {
   updateLink,
   deleteLink,
   getRedirectUrl,
+  generateQrCode,
 };
