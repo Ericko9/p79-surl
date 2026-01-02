@@ -1,7 +1,9 @@
 const db = require('../configs/database');
-const { eq } = require('drizzle-orm');
+const { eq, and, gt } = require('drizzle-orm');
 const { users } = require('../models/user.model');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
+const AppError = require('../utils/AppError');
 
 // GET USER PROFILE
 const getProfile = async (userId) => {
@@ -85,4 +87,104 @@ const deleteUser = async (userId) => {
   return true;
 };
 
-module.exports = { getProfile, updateProfile, changePassword, deleteUser };
+// FIND USER BY EMAIL
+const findUserByEmail = async (email) => {
+  const user = await db.query.users.findFirst({
+    where: eq(users.email, email),
+  });
+
+  // jika email tidak ada/tidak terdaftar
+  if (!user) {
+    throw new AppError('Email not registered.', 404);
+  }
+
+  return user;
+};
+
+// SAVE RESET PASSWORD TOKEN (EMAIL)
+const saveResetToken = async (userId, resetToken) => {
+  try {
+    // hashing expire token
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(resetToken)
+      .digest('hex');
+
+    // buat expire date
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+
+    // update data reset token dan expire di db
+    const result = await db
+      .update(users)
+      .set({
+        resetPasswordToken: hashedToken,
+        resetPasswordExpires: expiresAt,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+
+    // cek apakah data berhasil diupdate
+    if (result.length === 0) {
+      throw new AppError(
+        'Failed to save reset token. User might not exist.',
+        404
+      );
+    }
+
+    return result[0];
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+
+    console.error(error.message);
+
+    throw new AppError(
+      'An error occurred while securing your reset request. Please try again.',
+      500
+    );
+  }
+};
+
+// RESET PASSWORD
+const resetPassword = async (token, newPassword) => {
+  // hask token dari URL untuk matching dengan yang di db
+  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+  // find user yang memiliki token tersebut
+  const user = await db.query.users.findFirst({
+    where: and(
+      eq(users.resetPasswordToken, hashedToken),
+      gt(users.resetPasswordExpires, new Date().toISOString())
+    ),
+  });
+
+  if (!user) {
+    throw new AppError('Token is invalid or has expired.', 400);
+  }
+
+  // hash new password
+  const newPasswordHash = await bcrypt.hash(newPassword, 10);
+
+  // update password dan hapus token
+  await db
+    .update(users)
+    .set({
+      passwordHash: newPasswordHash,
+      resetPasswordToken: null,
+      resetPasswordExpires: null,
+      updatedAt: new Date().toISOString(),
+    })
+    .where(eq(users.id, user.id));
+
+  return true;
+};
+
+module.exports = {
+  getProfile,
+  updateProfile,
+  changePassword,
+  deleteUser,
+  findUserByEmail,
+  saveResetToken,
+  resetPassword,
+};
