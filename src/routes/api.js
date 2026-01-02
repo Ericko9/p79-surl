@@ -141,6 +141,7 @@ router.get('/users/profile', auth, userController.getProfile);
 router.put('/users/update-user', auth, userController.updateProfile);
 router.put('/users/change-password', auth, userController.changePassword);
 router.delete('/users/delete-user', auth, userController.deleteUser);
+router.post('/users/reset-password', userController.resetPassword);
 
 // LINK MANAGEMENT
 const linkController = require('../controllers/link.controller');
@@ -160,5 +161,11 @@ router.delete(
   linkOwnership,
   linkController.deleteLink
 );
+router.get('/:shortKey', linkController.redirect);
+
+// MAILER MANAGEMENT
+const mailerController = require('../controllers/mailer.controller');
+
+router.post('/auth/forgot-password', mailerController.forgotPassword);
 
 module.exports = router;

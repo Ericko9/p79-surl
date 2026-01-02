@@ -1,146 +1,272 @@
-<div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-3xl shadow-2xl mt-8 p-8 md:p-12 lg:p-16 relative overflow-hidden">
-    <!-- Background Animation -->
-    <div class="absolute top-0 right-0 w-full h-full opacity-10 animate-pulse-bg">
-        <div class="w-[200%] h-[200%] bg-gradient-radial from-white to-transparent rounded-full"></div>
-    </div>
-    
-    <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-        <!-- QR Illustration -->
-        <div class="lg:col-span-4 flex justify-center">
-            <div class="relative">
-              <img src="/images/Image8.png" class = 'h-[400px] w-[400px]'/>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes pulse-bg {
+            0%, 100% { opacity: 0.1; }
+            50% { opacity: 0.2; }
+        }
+        .animate-pulse-bg {
+            animation: pulse-bg 3s ease-in-out infinite;
+        }
+        .bg-gradient-radial {
+            background: radial-gradient(circle, currentColor 0%, transparent 70%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 p-4 md:p-8">
+    <div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-3xl shadow-2xl mt-8 p-8 md:p-12 lg:p-16 relative overflow-hidden">
+        <!-- Background Animation -->
+        <div class="absolute top-0 right-0 w-full h-full opacity-10 animate-pulse-bg">
+            <div class="w-[200%] h-[200%] bg-gradient-radial from-white to-transparent rounded-full"></div>
+        </div>
+        
+        <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <!-- QR Illustration -->
+            <div class="lg:col-span-4 flex justify-center">
+                <div class="relative">
+                    <img src="/images/Image8.png"/>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="lg:col-span-8">
+                <h1 class="text-white text-4xl font-bold mb-4">
+                    Shorten Your Links, Track <br> Every Click!
+                </h1>
+                <p class="text-white/90 text-base md:text-lg mb-8">
+                    Create branded short links and custom QR codes instantly. Monitor <br> performance with real-time analytics.
+                </p>
+                
+                <!-- Form -->
+                <form id="shortenForm" class="space-y-4">
+                    <div>
+                        <label class="text-white text-sm font-medium mb-2 block">Destination URL</label>
+                        <input 
+                            type="url" 
+                            name="url" 
+                            id="destinationUrl"
+                            placeholder="https://longurl.example.com/page" 
+                            required
+                            class="w-full px-4 py-3 rounded-[10px] border-0 bg-white focus:outline-none focus:ring-2 focus:ring-white/50 transition-all placeholder-gray-400 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed"
+                        >
+                        <!-- Error Message -->
+                        <div id="urlError" class="hidden mt-2 flex items-center gap-2 text-red-300 text-sm">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                            </svg>
+                            <span id="errorMessage">Invalid URL. Please make sure it starts with http:// or https://</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Custom Alias Field (Hidden by default) -->
+                    <div id="customAliasField" class="hidden">
+                        <label class="text-white text-sm font-medium mb-2 block">Custom Alias (Optional)</label>
+                        <input 
+                            type="text" 
+                            name="customAlias" 
+                            id="customAlias"
+                            placeholder="my-custom-link" 
+                            class="w-full px-4 py-3 rounded-[10px] border-0 bg-white focus:outline-none focus:ring-2 focus:ring-white/50 transition-all placeholder-gray-400 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed"
+                        >
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <input 
+                            type="checkbox" 
+                            id="customizeLink" 
+                            name="customizeLink" 
+                            class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                        >
+                        <label for="customizeLink" class="ml-2 text-white text-sm cursor-pointer">
+                            Customize link settings
+                        </label>
+                    </div>
+                    
+                    <!-- Shortened URL Result (Hidden by default) -->
+                    <div id="shortenedResult" class="hidden space-y-4">
+                        <div>
+                            <label class="text-white text-sm font-medium mb-2 block">Your Short Link</label>
+                            <div class="relative">
+                                <input 
+                                    type="text" 
+                                    id="shortenedUrl"
+                                    value="" 
+                                    readonly
+                                    class="w-full px-4 py-3 pr-24 rounded-[10px] border-0 bg-white focus:outline-none focus:ring-2 focus:ring-white/50 transition-all cursor-pointer"
+                                    onclick="copyToClipboard()"
+                                >
+                                <button 
+                                    type="button"
+                                    onclick="copyToClipboard()"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 border-l border-blue-300 pl-3 text-blue-600 hover:text-blue-700 transition-colors"
+                                    title="Copy to clipboard"
+                                >
+                                    <span id="copyText">Copy</span>
+                                </button>                 
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="flex justify-center gap-3">
+                            <button 
+                                type="button"
+                                class="bg-white text-blue-600 px-5 py-2.5 rounded-full font-medium hover:bg-gray-50 transition-all duration-200 shadow-md hover:shadow-lg border-2 border-blue-300 flex items-center justify-center gap-2 w-full text-center"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                                </svg>
+                                <span>Generate QR Code</span>
+                            </button>
+                        
+                            <button 
+                                type="button"
+                                class="bg-white text-blue-600 px-5 py-2.5 rounded-full font-medium hover:bg-gray-50 transition-all duration-200 shadow-md hover:shadow-lg border-2 border-blue-300 flex items-center justify-center gap-2 w-full text-center"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                </svg>
+                                <span>View Real-time Analytics</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end">
+                        <button 
+                            type="submit" 
+                            id="submitBtn"
+                            class="bg-white text-blue-600 px-6 py-2.5 rounded-full font-medium hover:bg-gray-50 transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <span id="btnText">Shorten Link</span>
+                            <svg id="btnIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
-
-        <!-- Content -->
-        <div class="lg:col-span-8">
-            <h1 class="text-white text-4xl font-bold mb-4">
-                Shorten Your Links, Track <br> Every Click!
-            </h1>
-            <p class="text-white/90 text-base md:text-lg mb-8">
-                Create branded short links and custom QR codes instantly. Monitor <br> performance with real-time analytics.
-            </p>
-            
-            <!-- Form -->
-            <form action="/shorten" method="POST" class="space-y-4" id="shortenForm">
-              <div>
-                  <label class="text-white text-sm font-medium mb-2 block">Destination URL</label>
-                  <input 
-                      type="url" 
-                      name="url" 
-                      id="destinationUrl"
-                      placeholder="https://longurl.example.com/page" 
-                      required
-                      class="w-full px-4 py-3 rounded-[10px] border-0 bg-white focus:outline-none focus:ring-2 focus:ring-white/50 transition-all placeholder-gray-400 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed"
-                  >
-                  <!-- Error Message -->
-                  <div id="urlError" class="hidden mt-2 flex items-center gap-2 text-red-300 text-sm">
-                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                      </svg>
-                      <span>Invalid URL. Please make sure it starts with http:// or https://</span>
-                  </div>
-              </div>
-              
-              <!-- Custom Alias Field (Hidden by default) -->
-              <div id="customAliasField" class="hidden">
-                  <label class="text-white text-sm font-medium mb-2 block">Custom Alias (Optional)</label>
-                  <input 
-                      type="text" 
-                      name="customAlias" 
-                      id="customAlias"
-                      placeholder="my-custom-link" 
-                      class="w-full px-4 py-3 rounded-[10px] border-0 bg-white focus:outline-none focus:ring-2 focus:ring-white/50 transition-all placeholder-gray-400 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed"
-                  >
-              </div>
-              
-              <div class="flex items-center">
-                  <input 
-                      type="checkbox" 
-                      id="customizeLink" 
-                      name="customizeLink" 
-                      class="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                  >
-                  <label for="customizeLink" class="ml-2 text-white text-sm cursor-pointer">
-                      Customize link settings
-                  </label>
-              </div>
-              
-              <!-- Shortened URL Result (Hidden by default) -->
-              <div id="shortenedResult" class="hidden space-y-4">
-                  <div>
-                      <label class="text-white text-sm font-medium mb-2 block">Your Short Link</label>
-                      <div class="relative">
-                          <input 
-                              type="text" 
-                              id="shortenedUrl"
-                              value="https://short.url/abc123" 
-                              readonly
-                              class="w-full px-4 py-3 pr-12 rounded-[10px] border-0 bg-white focus:outline-none focus:ring-2 focus:ring-white/50 transition-all cursor-pointer"
-                              onclick="copyToClipboard()"
-                          >
-                          <button 
-                              type="button"
-                              onclick="copyToClipboard()"
-                              class="absolute right-3 top-1/2 -translate-y-1/2
-                                    flex items-center gap-2
-                                    border-l border-blue-300 pl-3
-                                    text-blue-600 hover:text-blue-700 transition-colors"
-                              title="Copy to clipboard"
-                          >
-                              <span>Copy</span>
-                          </button>                 
-                      </div>
-                  </div>
-                  
-                  <!-- Action Buttons -->
-                  <div class="flex justify-center gap-3">
-                    
-                    <button 
-                        type="button"
-                        class="bg-white text-blue-600 px-5 py-2.5 rounded-full font-medium
-                               hover:bg-gray-50 transition-all duration-200
-                               shadow-md hover:shadow-lg border-2 border-blue-300
-                               flex items-center justify-center gap-2
-                               w-full text-center"
-                    >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
-                        </svg>
-                        <span>Generate QR Code</span>
-                    </button>
-                
-                    <button 
-                        type="button"
-                        class="bg-white text-blue-600 px-5 py-2.5 rounded-full font-medium
-                               hover:bg-gray-50 transition-all duration-200
-                               shadow-md hover:shadow-lg border-2 border-blue-300
-                               flex items-center justify-center gap-2
-                               w-full text-center"
-                    >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                        </svg>
-                        <span>View Real-time Analytics</span>
-                    </button>
-                </div>
-              </div>
-              
-              <div class="flex justify-end">
-                  <button 
-                      type="submit" 
-                      id="submitBtn"
-                      class="bg-white text-blue-600 px-6 py-2.5 rounded-full font-medium hover:bg-gray-50 transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2"
-                  >
-                      <span id="btnText">Shorten Link</span>
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
-                      </svg>
-                  </button>
-              </div>
-          </form>
-        </div>
     </div>
-</div>
+
+    <script>
+        const API_ENDPOINT = '/api/v1/links/create';
+        
+        // Toggle custom alias field
+        document.getElementById('customizeLink').addEventListener('change', function(e) {
+            const customAliasField = document.getElementById('customAliasField');
+            if (e.target.checked) {
+                customAliasField.classList.remove('hidden');
+            } else {
+                customAliasField.classList.add('hidden');
+                document.getElementById('customAlias').value = '';
+            }
+        });
+
+        // Handle form submission
+        document.getElementById('shortenForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const destinationUrl = document.getElementById('destinationUrl').value.trim();
+            const customAlias = document.getElementById('customAlias').value.trim();
+            const urlError = document.getElementById('urlError');
+            const submitBtn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            const btnIcon = document.getElementById('btnIcon');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            // Hide previous errors
+            urlError.classList.add('hidden');
+            
+            // Validate URL format
+            try {
+                new URL(destinationUrl);
+            } catch {
+                errorMessage.textContent = 'Invalid URL. Please make sure it starts with http:// or https://';
+                urlError.classList.remove('hidden');
+                return;
+            }
+            
+            // Prepare request body
+            const requestBody = {
+                redirect_uri: destinationUrl
+            };
+            
+            if (customAlias) {
+                requestBody.custom_key = customAlias;
+            }
+            
+            // Disable button and show loading state
+            submitBtn.disabled = true;
+            btnText.textContent = 'Processing...';
+            btnIcon.innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+            
+            try {
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(requestBody)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.status && data.data) {
+                    // Success - show shortened URL
+                    const baseUrl = window.location.origin; // Will use current domain and port
+                    const shortUrl = `${baseUrl}/${data.data.short_key}`;
+                    document.getElementById('shortenedUrl').value = shortUrl;
+                    document.getElementById('shortenedResult').classList.remove('hidden');
+                    
+                    // Update button
+                    btnText.textContent = 'Create Another';
+                    btnIcon.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>';
+                } else {
+                    // Error from API
+                    errorMessage.textContent = data.message || data.detail || 'Failed to shorten URL. Please try again.';
+                    urlError.classList.remove('hidden');
+                    
+                    // Reset button
+                    btnText.textContent = 'Shorten Link';
+                    btnIcon.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>';
+                }
+            } catch (error) {
+                errorMessage.textContent = 'Network error. Please check if the API server is running.';
+                urlError.classList.remove('hidden');
+                
+                // Reset button
+                btnText.textContent = 'Shorten Link';
+                btnIcon.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>';
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Copy to clipboard function
+        function copyToClipboard() {
+            const shortenedUrl = document.getElementById('shortenedUrl');
+            const copyText = document.getElementById('copyText');
+            
+            shortenedUrl.select();
+            shortenedUrl.setSelectionRange(0, 99999); // For mobile devices
+            
+            navigator.clipboard.writeText(shortenedUrl.value).then(() => {
+                // Show success feedback
+                const originalText = copyText.textContent;
+                copyText.textContent = 'Copied!';
+                
+                setTimeout(() => {
+                    copyText.textContent = originalText;
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+            });
+        }
+    </script>
+</body>
+</html>

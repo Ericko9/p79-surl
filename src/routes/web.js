@@ -1,33 +1,46 @@
-var express = require('express')
-var fs = require('fs')
-var router = express.Router()
-var path = require('path')
+var express = require('express');
+var fs = require('fs');
+var router = express.Router();
+var path = require('path');
 
-var { cwd }  = process
+var { cwd } = process;
 
-var pathDB = path.join(cwd(),'src', 'database', 'database.json')
-var db = fs.readFileSync(pathDB, 'utf-8') || '[]'
-db = JSON.parse(db)
+function getDbPath() {
+  if (process.env.VERCEL) return path.join('/tmp', 'database.json');
+  return path.join(cwd(), 'src', 'database', 'database.json');
+}
 
-router.get('/', function(req, res, next) {
-    res.render('index', { data: db, host: req.get('host')  })
-})
+var pathDB = getDbPath();
+var db;
+try {
+  db = fs.readFileSync(pathDB, 'utf-8') || '[]';
+} catch (e) {
+  try {
+    fs.writeFileSync(pathDB, '[]');
+  } catch (e) {}
+  db = '[]';
+}
+db = JSON.parse(db);
 
-router.get('/shortens', function(req, res, next) {
-    res.render('shortens')
-})
+router.get('/', function (req, res, next) {
+  res.render('index', { data: db, host: req.get('host') });
+});
 
-router.get('/about', function(req, res, next) {
-    res.render('about')
-})
+router.get('/shortens', function (req, res, next) {
+  res.render('shortens');
+});
 
-router.get('/community', function(req, res, next) {
-    res.render('community')
-})
+router.get('/about', function (req, res, next) {
+  res.render('about');
+});
 
-router.get('/contributors', function(req, res, next) {
-    res.render('contributors')
-})
+router.get('/community', function (req, res, next) {
+  res.render('community');
+});
+
+router.get('/contributors', function (req, res, next) {
+  res.render('contributors');
+});
 
 router.get('/reset-password', function(req, res, next) {
     res.render('resetpassword')
@@ -40,6 +53,10 @@ router.get('/login', function(req, res, next) {
 router.get('/register', function(req, res, next) {
     res.render('register')
 })
+
+const linkController = require('../controllers/link.controller');
+
+router.get('/:shortKey', linkController.redirect);
 
 router.post('/register', async (req, res) => {
     try {
@@ -115,5 +132,10 @@ function updateCountUri({ key } = {}) {
         }
     })
 }
+router.get('/favicon.ico', function (req, res) {
+  res.status(204).end();
+});
 
-module.exports = router
+
+
+module.exports = router;

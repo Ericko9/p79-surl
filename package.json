@@ -9,6 +9,7 @@
     "coverage": "jest --maxWorkers=4 --coverage"
   },
   "dependencies": {
+    "@getbrevo/brevo": "^3.0.1",
     "@libsql/client": "^0.15.15",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "~1.4.4",

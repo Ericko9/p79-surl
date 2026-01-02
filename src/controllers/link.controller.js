@@ -7,6 +7,7 @@ const asyncHandler = require('express-async-handler');
     3. Get Link Detail
     4. Update Link
     5. Delete Link
+    6. Handle Redirect
 */
 
 const createLink = asyncHandler(async (req, res) => {
@@ -126,10 +127,20 @@ const deleteLink = asyncHandler(async (req, res) => {
   });
 });
 
+const redirect = asyncHandler(async (req, res) => {
+  const { shortKey } = req.params;
+
+  // call getRedirectUrl service
+  const redirectUri = await linkService.getRedirectUrl(shortKey);
+
+  res.redirect(redirectUri);
+});
+
 module.exports = {
   createLink,
   getMyLinks,
   getLinkDetail,
   updateLink,
   deleteLink,
+  redirect,
 };

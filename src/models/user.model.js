@@ -6,6 +6,8 @@ const users = sqliteTable('users', {
   username: text('username').notNull(),
   email: text('email').notNull().unique(),
   passwordHash: text('password_hash'),
+  resetPasswordToken: text('reset_password_token'),
+  resetPasswordExpires: text('reset_password_expires'),
   createdAt: text('created_at').$defaultFn(() => new Date().toISOString()),
   updatedAt: text('updated_at').$defaultFn(() => new Date().toISOString()),
 });

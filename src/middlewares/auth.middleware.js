@@ -21,8 +21,8 @@ module.exports = function auth(req, res, next) {
     };
 
     next();
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.log(error);
 
     return res.status(401).json({
       status: false,

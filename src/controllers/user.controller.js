@@ -1,4 +1,5 @@
 const userService = require('../services/user.service');
+const asyncHandler = require('express-async-handler');
 
 /*  USER MANAGEMENT
     1. Get user profile
@@ -62,23 +63,23 @@ const changePassword = async (req, res) => {
   try {
     // get user id dari cookie
     const userId = req.user?.id;
-    const { old_password, new_password } = req.body;
+    const { old_password: oldPassword, new_password: newPassword } = req.body;
 
     // Validasi input
-    if (!old_password || !new_password) {
+    if (!oldPassword || !newPassword) {
       return res
         .status(400)
         .json({ message: 'Old and new password are required' });
     }
 
-    if (new_password.length < 8) {
+    if (newPassword.length < 8) {
       return res
         .status(400)
         .json({ message: 'New password must be at least 8 characters' });
     }
 
     // call changePassword service
-    await userService.changePassword(userId, old_password, new_password);
+    await userService.changePassword(userId, oldPassword, newPassword);
 
     return res.status(200).json({
       status: true,
@@ -119,4 +120,33 @@ const deleteUser = async (req, res) => {
   }
 };
 
-module.exports = { getProfile, updateProfile, changePassword, deleteUser };
+const resetPassword = asyncHandler(async (req, res) => {
+  const { token } = req.query;
+  const { password, confirmPassword } = req.body;
+
+  // cek field
+  if (password !== confirmPassword) {
+    throw new AppError('Passwords do not match.', 400);
+  }
+
+  if (password.length < 8) {
+    throw new AppError('Password must be at least 8 characters.', 400);
+  }
+
+  // call resetPassword service
+  await userService.resetPassword(token, password);
+
+  res.status(200).json({
+    status: true,
+    message:
+      'Password has been successfully reset. You can now login with your new password.',
+  });
+});
+
+module.exports = {
+  getProfile,
+  updateProfile,
+  changePassword,
+  deleteUser,
+  resetPassword,
+};

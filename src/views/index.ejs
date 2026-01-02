@@ -27,129 +27,9 @@
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
+    <%- include('./partials/navbar', { dashboard: false, shortens: false, about: true, community: false, contributors: false }) -%>
     <main role="main" class="container mx-auto px-4 max-w-6xl pt-16 md:pt-16">
-        <!-- Hero Section -->
-        <div class="relative bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 rounded-3xl shadow-2xl overflow-hidden my-8 p-8 md:p-12">
-            <!-- Decorative Elements -->
-            <div class="absolute top-0 right-0 w-64 h-64 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse-bg"></div>
-            <div class="absolute bottom-0 left-0 w-64 h-64 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse-bg" style="animation-delay: 2s;"></div>
-            
-            <div class="relative z-10">
-                <div class="text-center mb-8">
-                    <h1 class="text-white text-4xl md:text-5xl font-bold mb-4">
-                        Shorten Your Links
-                    </h1>
-                    <p class="text-blue-100 text-lg md:text-xl max-w-2xl mx-auto">
-                        Transform long URLs into short, shareable links in seconds
-                    </p>
-                </div>
-
-                <!-- Error/Success Message -->
-                <div id="alertMessage" class="hidden mb-4 p-4 rounded-xl text-center font-medium"></div>
-
-                <!-- Shortener Form -->
-                <form id="shortenForm" class="max-w-3xl mx-auto">
-                    <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8 space-y-6">
-                        <!-- Destination URL -->
-                        <div>
-                            <label class="block text-gray-700 font-medium mb-2">
-                                Destination URL <span class="text-red-500">*</span>
-                            </label>
-                            <input 
-                                type="text" 
-                                id="destinationUrl"
-                                placeholder="https://example.com/your-long-url"
-                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all"
-                                required
-                            >
-                            <p id="urlError" class="hidden mt-2 text-sm text-red-600">
-                                <i class="fas fa-exclamation-circle mr-1"></i>
-                                Please enter a valid URL starting with http:// or https://
-                            </p>
-                        </div>
-
-                        <!-- Custom Alias Toggle -->
-                        <div class="flex items-center">
-                            <input 
-                                type="checkbox" 
-                                id="customizeLink"
-                                class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                            >
-                            <label for="customizeLink" class="ml-2 text-gray-700 font-medium cursor-pointer">
-                                Customize short link (Optional)
-                            </label>
-                        </div>
-
-                        <!-- Custom Alias Field -->
-                        <div id="customAliasField" class="hidden">
-                            <label class="block text-gray-700 font-medium mb-2">
-                                Custom Alias
-                            </label>
-                            <div class="flex items-center border-2 border-gray-300 rounded-xl focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-100 transition-all">
-                                <span class="px-4 text-gray-500 bg-gray-50 py-3 border-r-2 border-gray-300 rounded-l-xl">
-                                    short.url/
-                                </span>
-                                <input 
-                                    type="text" 
-                                    id="customAlias"
-                                    placeholder="my-custom-link"
-                                    class="flex-1 px-4 py-3 focus:outline-none rounded-r-xl"
-                                >
-                            </div>
-                            <p class="mt-2 text-sm text-gray-500">
-                                <i class="fas fa-info-circle mr-1"></i>
-                                Use letters, numbers, and hyphens only
-                            </p>
-                        </div>
-
-                        <!-- Submit Button -->
-                        <button 
-                            type="submit" 
-                            id="submitBtn"
-                            class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3.5 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
-                        >
-                            <svg id="btnIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
-                            </svg>
-                            <span id="btnText">Shorten Link</span>
-                        </button>
-                    </div>
-                </form>
-
-                <!-- Result Section -->
-                <div id="shortenedResult" class="hidden max-w-3xl mx-auto mt-6">
-                    <div class="bg-white rounded-2xl shadow-xl p-6 md:p-8">
-                        <h3 class="text-gray-900 font-bold text-xl mb-4 flex items-center gap-2">
-                            <i class="fas fa-check-circle text-green-500"></i>
-                            Your shortened link is ready!
-                        </h3>
-                        
-                        <div class="flex gap-2">
-                            <input 
-                                type="text" 
-                                id="shortenedUrl"
-                                readonly
-                                class="flex-1 px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-xl font-mono text-blue-600"
-                            >
-                            <button 
-                                onclick="copyToClipboard()"
-                                class="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2"
-                            >
-                                <i class="fas fa-copy"></i>
-                                Copy
-                            </button>
-                        </div>
-
-                        <!-- QR Code Display (Optional) -->
-                        <div id="qrCodeSection" class="hidden mt-6 text-center">
-                            <p class="text-gray-600 mb-3">Scan QR Code:</p>
-                            <div id="qrCodeContainer" class="inline-block p-4 bg-white border-2 border-gray-200 rounded-xl"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
+        <%- include('./partials/hero') -%>
         <!-- Features Section -->
         <div class="mt-7 mb-12 p-8 md:p-12 max-w-6xl mx-auto">
             <div class="mb-12">
@@ -220,6 +100,8 @@
                 </button>
             </div>
         </div>
+        <%- include('./partials/footer') -%>
+
     </main>
 
     <script>

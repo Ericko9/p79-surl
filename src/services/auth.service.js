@@ -15,7 +15,6 @@ const register = async (username, email, password) => {
   if (existingUser) throw new Error('USER_EXISTS');
 
   const passwordHash = await bcrypt.hash(password, 10);
-  const createdAt = new Date().toISOString();
 
   // insert new user ke db
   const [newUser] = await db
@@ -25,7 +24,6 @@ const register = async (username, email, password) => {
       username,
       email,
       passwordHash,
-      createdAt: createdAt,
     })
     .returning();
 

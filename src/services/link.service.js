@@ -1,5 +1,5 @@
 const db = require('../configs/database');
-const { eq, and, desc, ne } = require('drizzle-orm');
+const { sql, eq, and, desc, ne } = require('drizzle-orm');
 const { links, linkRules } = require('../models/index');
 const crypto = require('crypto');
 const { normalizeUrl } = require('../utils/link-formatter');
@@ -250,10 +250,58 @@ const deleteLink = async (linkId, userId) => {
   return deletedLink;
 };
 
+// GET REDIRECT URL
+const getRedirectUrl = async (shortKey) => {
+  // get link dengan link rule
+  const link = await db.query.links.findFirst({
+    where: eq(links.shortKey, shortKey),
+    with: {
+      rules: true, // with link rule
+    },
+  });
+
+  if (!link) {
+    throw new AppError('Short link not found.', 404);
+  }
+
+  // validasi rules
+  const rules = link.rules;
+  if (rules) {
+    // validasi max click (type expire = max-click)
+    if (rules.expireType === 'max-click') {
+      if (link.clickCount >= rules.maxClick) {
+        throw new AppError(
+          'This link has reached its maximum click limit.',
+          410
+        );
+      }
+    }
+
+    // validasi Expire Date (type expire = date)
+    if (rules.expireType === 'date') {
+      if (rules.expireDate && new Date() > new Date(rules.expireDate)) {
+        throw new AppError('This link has expired.', 410);
+      }
+    }
+  }
+
+  // update click count di db
+  await db
+    .update(links)
+    .set({
+      clickCount: sql`${links.clickCount} + 1`,
+      updatedAt: new Date().toISOString(),
+    })
+    .where(eq(links.id, link.id));
+
+  return link.redirectUri;
+};
+
 module.exports = {
   createLink,
   getUserLinks,
   getLinkById,
   updateLink,
   deleteLink,
+  getRedirectUrl,
 };
