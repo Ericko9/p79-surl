@@ -1,16 +1,18 @@
 const db = require('../configs/database');
 const { sql, eq, and, desc, ne, like, gte, lte } = require('drizzle-orm');
-const { links, linkRules, linkQrCodes } = require('../models/index');
+const { links, linkRules, linkQrCodes, analytics } = require('../models/index');
 const crypto = require('crypto');
-const { normalizeUrl } = require('../utils/link-formatter');
+const { normalizeUrl } = require('../utils/link-formatter.helper');
 const {
   checkUrlValidity,
   validateKeyFormat,
-} = require('../utils/link-validator');
+} = require('../utils/link-validator.helper');
 const { randomUUID } = require('node:crypto');
 const QRCode = require('qrcode');
 const cloudinary = require('../configs/storage');
-const AppError = require('../utils/AppError');
+const geoip = require('geoip-lite');
+const UAParser = require('ua-parser-js');
+const AppError = require('../utils/app-error.helper');
 
 // CREATE A NEW SHORT LINK
 const createLink = async (userId, payload) => {
@@ -326,7 +328,28 @@ const getRedirectUrl = async (shortKey) => {
     })
     .where(eq(links.id, link.id));
 
-  return link.redirectUri;
+  return link;
+};
+
+// RECORD ANALYTICS DATA
+const recordAnalytics = async (linkId, { ip, userAgent, referrer }) => {
+  const geo = geoip.lookup(ip);
+
+  // parser data untuk mengambil browser dan os
+  const parser = new UAParser(userAgent);
+  const ua = parser.getResult();
+
+  // insert analytic data ke db
+  await db.insert(analytics).values({
+    id: crypto.randomUUID(),
+    linkId: linkId,
+    ipAddress: ip,
+    browser: ua.browser.name || 'Unknown',
+    os: ua.os.name || 'Unknown',
+    referrer: referrer,
+    city: geo ? geo.city : 'Unknown',
+    accessedAt: new Date().toISOString(),
+  });
 };
 
 // GENERATE QR CODE
@@ -389,5 +412,6 @@ module.exports = {
   updateLink,
   deleteLink,
   getRedirectUrl,
+  recordAnalytics,
   generateQrCode,
 };

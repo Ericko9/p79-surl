@@ -3,7 +3,7 @@ const { eq, and, gt } = require('drizzle-orm');
 const { users } = require('../models/user.model');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
-const AppError = require('../utils/AppError');
+const AppError = require('../utils/app-error.helper');
 
 // GET USER PROFILE
 const getProfile = async (userId) => {
