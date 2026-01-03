@@ -9,7 +9,7 @@ const cors = require('cors');
 const logger = require('morgan');
 const cookieParser = require('cookie-parser');
 const globalErrorHandler = require('./middlewares/error.middleware');
-const AppError = require('./utils/AppError');
+const AppError = require('./utils/app-error.helper');
 
 const app = express();
 

@@ -1,5 +1,5 @@
 const Brevo = require('@getbrevo/brevo');
-const AppError = require('../utils/AppError');
+const AppError = require('../utils/app-error.helper');
 
 const apiInstance = new Brevo.TransactionalEmailsApi();
 

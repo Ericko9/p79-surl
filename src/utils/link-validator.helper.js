@@ -1,4 +1,4 @@
-const AppError = require('./AppError');
+const AppError = require('./app-error.helper');
 
 const validateKeyFormat = (key) => {
   if (!key) return;

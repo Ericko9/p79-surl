@@ -141,10 +141,23 @@ const deleteLink = asyncHandler(async (req, res) => {
 const redirect = asyncHandler(async (req, res) => {
   const { shortKey } = req.params;
 
-  // call getRedirectUrl service
-  const redirectUri = await linkService.getRedirectUrl(shortKey);
+  // get metadata dari request
+  const ip =
+    req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
+  const userAgent = req.headers['user-agent'];
+  const referrer = req.headers['referer'] || null;
 
-  res.redirect(redirectUri);
+  // call getRedirectUrl service
+  const link = await linkService.getRedirectUrl(shortKey);
+
+  // insert data analytics di background
+  linkService
+    .recordAnalytics(link.id, { ip, userAgent, referrer })
+    .catch((err) => {
+      console.error('Failed to record analytics:', err);
+    });
+
+  res.redirect(link.redirectUri);
 });
 
 const generateQr = asyncHandler(async (req, res) => {
