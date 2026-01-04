@@ -2,7 +2,6 @@ const { createServer } = require('http');
 const apiRouter = require('./routes/api');
 const webRouter = require('./routes/web');
 const express = require('express');
-const createError = require('http-errors');
 const limitter = require('express-rate-limit');
 const path = require('path');
 const cors = require('cors');
@@ -12,6 +11,22 @@ const globalErrorHandler = require('./middlewares/error.middleware');
 const AppError = require('./utils/app-error.helper');
 
 const app = express();
+
+app.use(
+  cors({
+    origin: 'https://surl.jiwamu.de',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'Accept',
+    ],
+  })
+);
+
+app.options('*', cors());
 
 var DEBUG;
 if (process.argv[2] == 'dev') {
@@ -24,13 +39,11 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 app.set('json spaces', 2);
 
-app.use(cors({ origin: '*' }));
-
 if (!DEBUG) {
   app.use(
     limitter({
       windowMs: 1 * 60 * 1000,
-      max: 20,
+      max: 100,
       message: JSON.stringify({
         message: 'to many request',
       }),
