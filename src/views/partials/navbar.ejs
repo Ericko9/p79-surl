@@ -212,8 +212,8 @@
 
   // ========== USER DROPDOWN & LINK COUNT ==========
   (function() {
-    const USER_API_URL = 'http://localhost:8000/api/v1/users/profile';
-    const LINKS_API_URL = 'http://localhost:8000/api/v1/links/my-links';
+    const USER_API_URL = 'https://surl.jiwamu.de/api/v1/users/profile';
+    const LINKS_API_URL = 'https://surl.jiwamu.de/api/v1/links/my-links';
     const userMenuButton = document.getElementById('user-menu-button');
     const userMenu = document.getElementById('user-menu');
     const usernameDisplay = document.getElementById('username-display');
@@ -344,7 +344,7 @@
     e.preventDefault();
 
     try {
-      const response = await fetch('http://localhost:8000/api/v1/auth/logout', {
+      const response = await fetch('https://surl.jiwamu.de/api/v1/auth/logout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
