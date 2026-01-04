@@ -80,7 +80,18 @@ router.delete(
   linkOwnership,
   linkController.deleteLink
 );
-router.post('/links/:id/generate-qr', auth, linkController.generateQr);
+router.post(
+  '/links/:id/generate-qr',
+  auth,
+  linkOwnership,
+  linkController.generateQr
+);
+router.get(
+  '/links/:id/qr-detail',
+  auth,
+  linkOwnership,
+  linkController.getQrDetail
+);
 
 // ANALYTIC MANAGEMENT
 const analyticsController = require('../controllers/analytic.controller');

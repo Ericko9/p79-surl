@@ -143,6 +143,7 @@ const getLinkById = async (linkId, userId) => {
       where: and(eq(links.id, linkId), eq(links.userId, userId)),
       with: {
         rules: true, // with link rules
+        qrCode: true, // with qr codes
       },
     });
 
@@ -405,6 +406,19 @@ const generateQrCode = async (userId, linkId) => {
   };
 };
 
+// GET QR CODE
+const getQrByLinkId = async (linkId) => {
+  // get data QR
+  const qrData = await db.query.linkQrCodes.findFirst({
+    where: eq(linkQrCodes.linkId, linkId),
+  });
+
+  if (!qrData)
+    throw new AppError('QR Code not generated yet for this link.', 404);
+
+  return qrData;
+};
+
 module.exports = {
   createLink,
   getUserLinks,
@@ -414,4 +428,5 @@ module.exports = {
   getRedirectUrl,
   recordAnalytics,
   generateQrCode,
+  getQrByLinkId,
 };
