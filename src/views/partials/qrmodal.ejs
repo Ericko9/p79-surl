@@ -1,0 +1,83 @@
+<div id="qrModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div class="bg-white rounded-[32px] p-10 max-w-sm w-full text-center shadow-2xl transform transition-all">
+        <h3 class="text-2xl font-bold text-[#1e293b] mb-6">Your QR Code</h3>
+        
+        <div id="qrPlaceholder" class="bg-white aspect-square w-full rounded-2xl flex items-center justify-center mb-8 border-2 border-dashed border-gray-200 overflow-hidden">
+            <div id="qrLoadingContainer" class="flex flex-col items-center gap-2">
+                <i class="fas fa-spinner fa-spin text-blue-500 text-2xl"></i>
+                <span id="qrLoadingText" class="text-gray-400 text-sm font-medium">Generating...</span>
+            </div>
+            <img id="qrImage" src="" alt="QR Code" class="hidden w-full h-full object-contain p-4">
+        </div>
+
+        <div class="flex flex-col gap-3">
+            <button id="downloadBtn" onclick="downloadQR()" class="bg-[#2563eb] text-white py-3.5 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">
+                Download PNG
+            </button>
+            <button onclick="closeQRModal()" class="text-gray-500 py-2 hover:text-gray-800 font-semibold transition-colors">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const QR_API_BASE = 'http://localhost:8000/api/v1/links';
+    let currentQRImage = null;
+
+    async function openQRModal(linkId) {
+        const modal = document.getElementById('qrModal');
+        const img = document.getElementById('qrImage');
+        const loadingBox = document.getElementById('qrLoadingContainer');
+        const loadingText = document.getElementById('qrLoadingText');
+
+        if (!modal) return;
+
+        // Reset UI ke state "Generating"
+        modal.classList.replace('hidden', 'flex');
+        img.classList.add('hidden');
+        loadingBox.classList.remove('hidden');
+        loadingText.textContent = 'Generating...';
+        document.body.style.overflow = 'hidden';
+
+        try {
+            const response = await fetch(`${QR_API_BASE}/${linkId}/generate-qr`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            const result = await response.json();
+
+            if (result.status && result.data?.image) {
+                currentQRImage = result.data.image;
+                img.src = currentQRImage;
+                
+                // Hanya tampilkan gambar jika sudah benar-benar terload
+                img.onload = () => {
+                    loadingBox.classList.add('hidden');
+                    img.classList.remove('hidden');
+                };
+            } else {
+                throw new Error('API returned error');
+            }
+        } catch (error) {
+            console.error('QR Error:', error);
+            loadingText.textContent = 'Failed to generate QR';
+            loadingBox.querySelector('i').className = 'fas fa-exclamation-circle text-red-500';
+        }
+    }
+
+    function closeQRModal() {
+        const modal = document.getElementById('qrModal');
+        modal.classList.replace('flex', 'hidden');
+        document.body.style.overflow = 'auto';
+    }
+
+    function downloadQR() {
+        if (!currentQRImage) return alert('QR not ready');
+        const link = document.createElement('a');
+        link.href = currentQRImage;
+        link.download = `QR_Code_${Date.now()}.png`;
+        link.click();
+    }
+</script>

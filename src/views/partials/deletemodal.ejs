@@ -1,0 +1,28 @@
+<div id="deleteModal" class="fixed inset-0 z-[1000] hidden items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+    <div class="bg-white w-full max-w-sm rounded-[32px] shadow-2xl overflow-hidden animate-fadeIn relative p-8 text-center">
+        <button onclick="closeDeleteModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition">
+            <i class="fas fa-times-circle text-xl"></i>
+        </button>
+
+        <div class="flex justify-center mb-4">
+            <div class="bg-amber-100 w-16 h-16 rounded-full flex items-center justify-center">
+                <i class="fas fa-exclamation-triangle text-amber-500 text-3xl"></i>
+            </div>
+        </div>
+
+        <h3 class="text-2xl font-bold text-gray-800 mb-2">Warning!</h3>
+        <p class="text-gray-500 text-sm mb-8 leading-relaxed">
+            Are you sure want to delete this link?<br>
+            You can not restore this link.
+        </p>
+
+        <div class="flex gap-3">
+            <button onclick="closeDeleteModal()" class="flex-1 py-3 px-6 bg-cyan-50 text-cyan-600 rounded-full font-bold hover:bg-cyan-100 transition">
+                Cancel
+            </button>
+            <button id="confirmDeleteBtn" class="flex-1 py-3 px-6 bg-blue-600 text-white rounded-full font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition">
+                Yes, Sure
+            </button>
+        </div>
+    </div>
+</div>

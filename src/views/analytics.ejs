@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics - URL Shortener</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .custom-shadow { box-shadow: 0 10px 30px -15px rgba(0, 0, 0, 0.05); }
+        select { appearance: none; }
+    </style>
+</head>
+<body class="bg-[#F8FAFC] min-h-screen">
+    <%- include('./partials/navbar', { dashboard: true, shortens: false, about: false, community: false, contributors: false }) -%>
+
+    <main class="container mx-auto px-4 max-w-6xl pt-24 pb-12">
+        
+        <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm mb-6 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="p-2 bg-gray-50 rounded-xl border border-gray-200">
+                    <img id="headerQR" src="" alt="QR" class="w-12 h-12">
+                </div>
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="bg-blue-50 text-blue-600 text-[10px] px-2 py-0.5 rounded-full border border-blue-100 font-bold uppercase">
+                            <i class="far fa-calendar-alt mr-1"></i> <span id="headerDate">-- --- ----</span>
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <a id="headerShortUrl" href="#" target="_blank" class="text-blue-600 font-bold text-lg hover:underline">Loading...</a>
+                        <button id="headerCopyBtn" class="text-blue-400 hover:text-blue-600"><i class="far fa-copy text-sm"></i></button>
+                    </div>
+                    <p id="headerOriginalUrl" class="text-xs text-gray-400">Original URL : --</p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button id="headerDeleteBtn" class="w-10 h-10 flex items-center justify-center rounded-xl bg-red-50 text-red-500 hover:bg-red-100 transition">
+                    <i class="fas fa-trash-can"></i>
+                </button>
+                <button id="headerEditBtn" class="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition">
+                    <i class="fas fa-pen-to-square"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                <div class="flex items-center gap-2 text-gray-400 text-sm mb-4">
+                    <i class="far fa-eye"></i> <span>Total Visits</span> <i class="fas fa-circle-info text-[10px]"></i>
+                </div>
+                <div class="flex items-baseline gap-3">
+                    <h2 id="statsTotalVisits" class="text-4xl font-bold text-blue-600">--</h2>
+                    <span id="statsVisitsBadge" class="hidden text-[10px] px-2 py-0.5 rounded-full font-bold">
+                        <i id="statsVisitsIcon" class="fas mr-1"></i> <span id="statsVisitsPercent">0%</span>
+                    </span>
+                </div>
+                <p id="statsVisitsAverage" class="text-xs text-gray-400 mt-1">-- visits / day</p>
+            </div>
+
+            <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                <div class="flex items-center gap-2 text-gray-400 text-sm mb-4">
+                    <i class="far fa-calendar-check"></i> <span>Peak Traffic</span> <i class="fas fa-circle-info text-[10px]"></i>
+                </div>
+                <h2 id="statsPeakLabel" class="text-4xl font-bold text-blue-600">--</h2>
+                <p id="statsPeakValue" class="text-xs text-gray-400 mt-1">-- Visits</p>
+            </div>
+
+            <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                <div class="flex items-center gap-2 text-gray-400 text-sm mb-4">
+                    <i class="fas fa-chart-line"></i> <span>Trend</span> <i class="fas fa-circle-info text-[10px]"></i>
+                </div>
+                <div class="flex items-baseline gap-3">
+                    <h2 id="statsTrendPercent" class="text-4xl font-bold text-blue-600">--</h2>
+                    <span id="statsTrendStatus" class="hidden text-white text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">--</span>
+                </div>
+                <p id="statsTrendLabel" class="text-xs text-gray-400 mt-1">--</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            <div class="lg:col-span-8 bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm flex flex-col">
+                <div class="flex flex-wrap items-end justify-between mb-8 gap-4">
+                    <div class="flex flex-wrap items-center gap-6">
+                        <div class="flex flex-col gap-1.5">
+                            <label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest ml-1">Time Period <span class="text-red-400">*</span></label>
+                            <div class="relative">
+                                <i class="far fa-calendar absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                                <select id="filterPeriod" class="pl-10 pr-10 py-2.5 bg-gray-50 border border-transparent rounded-2xl text-xs font-bold text-gray-600 focus:bg-white focus:border-blue-200 transition-all cursor-pointer min-w-[160px]">
+                                    <option value="today">Today</option>
+                                    <option value="last_7_days" selected>Last 7 Days</option>
+                                    <option value="last_30_days">Last 30 Days</option>
+                                    <option value="last_90_days">Last 90 Days</option>
+                                    <option value="custom">Custom Range</option>
+                                </select>
+                                <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]"></i>
+                            </div>
+                        </div>
+
+                        <div class="flex items-end gap-6">
+                            <div class="flex flex-col gap-1.5">
+                                <label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest ml-1">View by <span class="text-red-400">*</span></label>
+                                <div class="relative">
+                                    <i class="fas fa-history absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                                    <select id="filterViewBy" class="pl-10 pr-10 py-2.5 bg-gray-50 border border-transparent rounded-2xl text-xs font-bold text-gray-600 focus:bg-white focus:border-blue-200 transition-all cursor-pointer min-w-[130px]">
+                                        <option value="hourly">Hourly</option>
+                                        <option value="daily" selected>Daily</option>
+                                        <option value="weekly">Weekly</option>
+                                        <option value="monthly">Monthly</option>
+                                    </select>
+                                    <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6 flex justify-between">
+                    <h3 class="font-bold text-[#1E293B] text-lg">Analytics</h3>
+                    <div class="flex items-center gap-3 pb-1">
+                        <div class="flex flex-col">
+                            <span class="text-[9px] font-bold text-[#1E293B] uppercase tracking-wider leading-none">Compare</span>
+                            <span class="text-[8px] text-gray-400 italic">Vs. previous</span>
+                        </div>
+                        <button id="compareToggle" class="w-10 h-5 bg-gray-200 rounded-full relative transition-colors duration-300 focus:outline-none">
+                            <div id="compareKnob" class="absolute left-1 top-1 w-3 h-3 bg-white rounded-full shadow-sm transition-all duration-300"></div>
+                        </button>
+                    </div>
+
+                </div>
+
+                <div class="flex-1 min-h-[350px]">
+                    <canvas id="analyticsChart"></canvas>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-gray-50 flex justify-end gap-8">
+                    <div class="flex items-center gap-2">
+                        <div class="w-2.5 h-2.5 rounded-full bg-blue-500"></div>
+                        <span class="text-[9px] font-bold text-gray-600 uppercase tracking-widest">Current Period</span>
+                    </div>
+                    <div class="flex items-center gap-2 opacity-60">
+                        <div class="w-2.5 h-2.5 rounded-full bg-gray-300"></div>
+                        <span class="text-[9px] font-bold text-gray-600 uppercase tracking-widest">Previous Period</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-4 bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm flex flex-col">
+                <h3 class="font-bold text-[#1E293B] text-lg mb-8">Locations</h3>
+                <div class="flex justify-center mb-10 h-48 relative"> 
+                    <canvas id="locationPieChart"></canvas> 
+                </div>
+                <div id="locationListContainer" class="space-y-5 flex-1 overflow-y-auto">
+                    </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="customRangeModal" class="fixed inset-0 bg-black/50 z-[999] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-md rounded-[32px] overflow-hidden shadow-2xl">
+            <div class="px-8 py-6 border-b border-gray-50 flex justify-between">
+                <h3 class="text-xl font-bold text-[#1E293B]">Custom Date Range</h3>
+                <button onclick="closeCustomRangeModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-8 space-y-6">
+                <div class="space-y-3">
+                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Quick Select</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button class="quick-select-btn py-3 px-4 rounded-2xl border border-gray-100 text-xs font-bold text-gray-400 transition-all hover:bg-blue-50" data-days="7">Last 7 Days</button>
+                        <button class="quick-select-btn py-3 px-4 rounded-2xl border border-gray-100 text-xs font-bold text-gray-400 transition-all hover:bg-blue-50" data-days="14">Last 14 Days</button>
+                        <button class="quick-select-btn py-3 px-4 rounded-2xl border border-gray-100 text-xs font-bold text-gray-400 transition-all hover:bg-blue-50" data-days="30">Last 30 Days</button>
+                        <button class="quick-select-btn py-3 px-4 rounded-2xl border border-gray-100 text-xs font-bold text-gray-400 transition-all hover:bg-blue-50" data-days="60">Last 60 Days</button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-2">
+                        <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Start Date</label>
+                        <input type="date" id="startDateInput" class="w-full px-4 py-3 bg-gray-50 rounded-2xl text-xs font-bold outline-none border border-transparent focus:border-blue-200">
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <label class="text-[11px] font-bold text-gray-400 uppercase tracking-widest">End Date</label>
+                        <input type="date" id="endDateInput" class="w-full px-4 py-3 bg-gray-50 rounded-2xl text-xs font-bold outline-none border border-transparent focus:border-blue-200">
+                    </div>
+                </div>
+                <div class="bg-blue-50 border border-blue-100 rounded-2xl px-4 py-3 flex items-center gap-3">
+                    <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+                    <span id="selectedDaysInfo" class="text-[11px] font-bold text-blue-600">0 day(s) selected.</span>
+                </div>
+            </div>
+            <div class="px-8 py-6 bg-gray-50 flex gap-3">
+                <button onclick="closeCustomRangeModal()" class="flex-1 py-4 bg-white border rounded-2xl text-xs font-bold text-gray-400">Cancel</button>
+                <button id="applyCustomRange" class="flex-1 py-4 bg-blue-600 text-white text-xs font-bold rounded-2xl shadow-lg shadow-blue-200">Yes, Sure</button>
+            </div>
+        </div>
+    </div>
+    <%- include('./partials/footer2') -%>
+    <%- include('./partials/editmodal') %>
+
+    <%- include('./partials/deletemodal') %>
+
+    <script>
+        // --- 1. KONFIGURASI GLOBAL ---
+        const BASE_SHORT_URL = 'https://surl.jiwamu.de/';
+        let allLinks = []; // Cache global untuk data link agar bisa diakses modal edit
+    
+        function formatDate(dateString) {
+            if (!dateString) return '-- --- ----';
+            const date = new Date(dateString);
+            const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+        }
+    
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => alert('Link berhasil disalin!'));
+        }
+    
+        // --- 2. INISIALISASI GRAFIK ---
+        // Chart Line (Analytics) dengan skala Y kelipatan 5
+        const ctxAnalytics = document.getElementById('analyticsChart').getContext('2d');
+        const analyticsChart = new Chart(ctxAnalytics, {
+            type: 'line',
+            data: {
+                labels: [], 
+                datasets: [
+                    { 
+                        label: 'Current Period', 
+                        data: [], 
+                        borderColor: '#2563eb', 
+                        tension: 0.4, 
+                        fill: false 
+                    },
+                    { 
+                        label: 'Previous Period', 
+                        data: [], 
+                        borderColor: '#CBD5E1', 
+                        borderDash: [5, 5], 
+                        tension: 0.4, 
+                        fill: false, 
+                        hidden: true 
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { 
+                        beginAtZero: true, 
+                        ticks: { stepSize: 5, color: '#94A3B8', font: { size: 10 } }, 
+                        grid: { borderDash: [5, 5] } 
+                    },
+                    x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#94A3B8' } }
+                }
+            }
+        });
+    
+        // Chart Doughnut (Locations)
+        const ctxPie = document.getElementById('locationPieChart').getContext('2d');
+        const locationPieChart = new Chart(ctxPie, {
+            type: 'doughnut',
+            data: { labels: [], datasets: [{ data: [], backgroundColor: ['#3B82F6', '#FBBF24', '#EF4444', '#10B981', '#8B5CF6'] }] },
+            options: { cutout: '75%', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+    
+        // --- 3. LOGIKA INTEGRASI API ---
+        async function fetchAnalyticsData(customStart = null, customEnd = null) {
+            const urlParts = window.location.pathname.split('/');
+            const linkId = urlParts[urlParts.length - 1];
+            const period = document.getElementById('filterPeriod').value;
+            const viewBy = document.getElementById('filterViewBy').value;
+            const offset = new Date().getTimezoneOffset();
+    
+            let queryParams = `?period=${period}&view_by=${viewBy}&offset=${offset}`;
+            
+            // Tambahkan params custom agar tidak error 500
+            if (period === 'custom' && customStart && customEnd) {
+                queryParams += `&custom_start=${customStart}&custom_end=${customEnd}`;
+            }
+    
+            try {
+                // A. Header Details & Action Buttons
+                const linkRes = await fetch(`http://localhost:8000/api/v1/links/${linkId}/detail`);
+                if (linkRes.ok) {
+                    const { data } = await linkRes.json();
+                    
+                    // Simpan ke cache global untuk modal
+                    const index = allLinks.findIndex(l => l.id === data.id);
+                    if (index === -1) allLinks.push(data);
+                    else allLinks[index] = data;
+    
+                    // Update UI & Dataset ID
+                    document.getElementById('headerEditBtn').dataset.id = data.id;
+                    document.getElementById('headerDeleteBtn').dataset.id = data.id;
+                    document.getElementById('headerDate').textContent = formatDate(data.created_at);
+                    document.getElementById('headerShortUrl').textContent = `${BASE_SHORT_URL}${data.short_key}`;
+                    document.getElementById('headerShortUrl').href = `${BASE_SHORT_URL}${data.short_key}`;
+                    document.getElementById('headerOriginalUrl').textContent = `Original URL : ${data.redirect_uri}`;
+                    document.getElementById('headerQR').src = data.qr_code.image_path;
+                    document.getElementById('headerCopyBtn').onclick = () => copyToClipboard(`${BASE_SHORT_URL}${data.short_key}`);
+                }
+    
+                // B. Summary Stats (UI Tetap Sama)
+                const sumRes = await fetch(`http://localhost:8000/api/v1/analytics/${linkId}/summary${queryParams}`);
+                if (sumRes.ok) {
+                    const { data } = await sumRes.json();
+                    document.getElementById('statsTotalVisits').textContent = data.total_visits.current_period;
+                    document.getElementById('statsVisitsPercent').textContent = `${Math.round(data.total_visits.percentage)}%`;
+                    document.getElementById('statsVisitsBadge').className = data.total_visits.is_growing ? 'bg-green-50 text-green-600 rounded-lg px-2 py-1 font-bold text-[10px] flex items-center' : 'bg-red-50 text-red-600 rounded-lg px-2 py-1 font-bold text-[10px] flex items-center';
+                    document.getElementById('statsVisitsBadge').classList.remove('hidden');
+                    document.getElementById('statsVisitsAverage').textContent = `${data.total_visits.average_per_unit} visits / ${data.total_visits.unit_label}`;
+                    document.getElementById('statsPeakLabel').textContent = data.peak_traffic.label;
+                    document.getElementById('statsPeakValue').textContent = `${data.peak_traffic.value} Visits`;
+                    document.getElementById('statsTrendPercent').textContent = `${Math.round(data.trend.percentage)}%`;
+                    document.getElementById('statsTrendLabel').textContent = data.trend.label;
+                    const tStatus = document.getElementById('statsTrendStatus');
+                    tStatus.textContent = data.trend.status;
+                    tStatus.classList.remove('hidden');
+                    tStatus.className = `text-white text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${data.trend.status.toLowerCase() === 'growing' ? 'bg-green-500' : 'bg-red-500'}`;
+                }
+    
+                // C. Time Series & Compare
+                const tsRes = await fetch(`http://localhost:8000/api/v1/analytics/${linkId}/time-series${queryParams}`);
+                if (tsRes.ok) {
+                    const { data } = await tsRes.json();
+                    analyticsChart.data.labels = data.map(i => i.display_label);
+                    analyticsChart.data.datasets[0].data = data.map(i => i.current_period);
+                    analyticsChart.data.datasets[1].data = data.map(i => i.previous_period);
+                    analyticsChart.update();
+                }
+    
+                // D. Locations
+                const locRes = await fetch(`http://localhost:8000/api/v1/analytics/${linkId}/location${queryParams}`);
+                if (locRes.ok) {
+                    const { data } = await locRes.json();
+                    renderLocationTable(data.table);
+                    locationPieChart.data.labels = data.chart.map(i => i.label);
+                    locationPieChart.data.datasets[0].data = data.chart.map(i => i.value);
+                    locationPieChart.update();
+                }
+            } catch (err) { console.error("Gagal memuat data:", err); }
+        }
+    
+        // --- 4. MODAL & UI UTILS ---
+        function renderLocationTable(tableData) {
+            const container = document.getElementById('locationListContainer');
+            let html = '<div class="grid grid-cols-3 text-[10px] font-extrabold text-blue-400 mb-4 border-b pb-3 uppercase tracking-widest"><span>No</span><span>Location</span><span class="text-right">Total Visit</span></div>';
+            const colors = ['bg-blue-500', 'bg-amber-400', 'bg-red-500', 'bg-emerald-500', 'bg-violet-500'];
+            tableData.forEach((item, idx) => {
+                const color = colors[idx % colors.length];
+                html += `<div class="space-y-3">
+                    <div class="flex justify-between text-xs text-slate-600 font-bold">
+                        <span class="w-5 text-slate-400 font-medium">${item.no}</span>
+                        <span>${item.location}</span>
+                        <span class="font-bold text-slate-800">${item.total_visits}</span>
+                    </div>
+                    <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div class="${color} h-full" style="width: ${item.percentage}%"></div>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+    
+        function calculateDays() {
+            const start = new Date(document.getElementById('startDateInput').value);
+            const end = new Date(document.getElementById('endDateInput').value);
+            if (!isNaN(start) && !isNaN(end)) {
+                const diff = Math.ceil(Math.abs(end - start) / (86400000)) + 1;
+                document.getElementById('selectedDaysInfo').textContent = `${diff} day(s) selected.`;
+            }
+        }
+    
+        function closeCustomRangeModal() {
+            document.getElementById('customRangeModal').classList.add('hidden');
+            if (!document.getElementById('startDateInput').value) document.getElementById('filterPeriod').value = 'last_7_days';
+        }
+    
+        // --- 5. EVENT LISTENERS ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const periodSelect = document.getElementById('filterPeriod');
+            const viewBySelect = document.getElementById('filterViewBy');
+            const compareToggle = document.getElementById('compareToggle');
+            const compareKnob = document.getElementById('compareKnob');
+            const headerEditBtn = document.getElementById('headerEditBtn');
+            const headerDeleteBtn = document.getElementById('headerDeleteBtn');
+    
+            // Handler Filter & Modal
+            periodSelect.onchange = function() {
+                if (this.value === 'custom') document.getElementById('customRangeModal').classList.remove('hidden');
+                else fetchAnalyticsData();
+            };
+            viewBySelect.onchange = () => fetchAnalyticsData();
+    
+            // Handler Toggle Compare
+            compareToggle.onclick = () => {
+                const isHidden = analyticsChart.data.datasets[1].hidden;
+                analyticsChart.data.datasets[1].hidden = !isHidden;
+                compareKnob.style.transform = isHidden ? 'translateX(20px)' : 'translateX(0)';
+                compareToggle.classList.toggle('bg-blue-600', isHidden);
+                compareToggle.classList.toggle('bg-gray-200', !isHidden);
+                analyticsChart.update();
+            };
+    
+            // Handler Header Actions (Edit & Delete)
+            headerEditBtn.onclick = function() {
+                const linkId = this.dataset.id;
+                const linkData = allLinks.find(l => l.id === linkId);
+                if (linkData && typeof openEditModal === 'function') openEditModal(linkData);
+            };
+            headerDeleteBtn.onclick = function() {
+                const linkId = this.dataset.id;
+                if (linkId && typeof openDeleteModal === 'function') openDeleteModal(linkId);
+            };
+    
+            // Handler Quick Select Modal
+            document.querySelectorAll('.quick-select-btn').forEach(btn => {
+                btn.onclick = function() {
+                    const end = new Date(); const start = new Date();
+                    start.setDate(end.getDate() - parseInt(this.dataset.days) + 1);
+                    document.getElementById('startDateInput').value = start.toISOString().split('T')[0];
+                    document.getElementById('endDateInput').value = end.toISOString().split('T')[0];
+                    calculateDays();
+                };
+            });
+    
+            document.getElementById('applyCustomRange').onclick = () => {
+                const s = document.getElementById('startDateInput').value;
+                const e = document.getElementById('endDateInput').value;
+                if (s && e) { fetchAnalyticsData(s, e); closeCustomRangeModal(); }
+            };
+    
+            document.getElementById('startDateInput').onchange = calculateDays;
+            document.getElementById('endDateInput').onchange = calculateDays;
+    
+            fetchAnalyticsData(); // Initial Load
+        });
+
+// --- LOGIKA MODAL EDIT ---
+function openEditModal(link) {
+    const modal = document.getElementById('editModal');
+    
+    // 1. Isi data dasar
+    document.getElementById('editLinkId').value = link.id;
+    document.getElementById('editCustomKey').value = link.short_key;
+    document.getElementById('editRedirectUri').value = link.redirect_uri;
+
+    const clickContainer = document.getElementById('containerMaxClick');
+    const dateContainer = document.getElementById('containerExpireDate');
+
+    // 2. Mapping Rules (Asumsi data dari backend mengikuti format link.rules)
+    if (link.rules) {
+        const type = link.rules.expire_type === 'date' ? 'expire_date' : 'max_click';
+        document.getElementById('editRulesType').value = type;
+        document.getElementById('editMaxClick').value = link.rules.max_click || 0;
+
+        if (link.rules.expire_date) {
+            // Format ke YYYY-MM-DD agar bisa dibaca input date
+            document.getElementById('editExpireDate').value = new Date(link.rules.expire_date).toISOString().split('T')[0];
+        }
+
+        // Tampilkan container yang sesuai
+        if (type === 'max_click') {
+            clickContainer.classList.remove('hidden');
+            dateContainer.classList.add('hidden');
+        } else {
+            clickContainer.classList.add('hidden');
+            dateContainer.classList.remove('hidden');
+        }
+    }
+
+    // 3. Tampilkan Modal
+    modal.classList.replace('hidden', 'flex');
+}
+
+document.getElementById('editLinkForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const linkId = document.getElementById('editLinkId').value;
+    const customKey = document.getElementById('editCustomKey').value;
+
+    // VALIDASI FRONTEND: Cek apakah karakter pertama adalah angka
+    if (/^\d/.test(customKey)) {
+        alert("Error: Custom Key tidak boleh diawali dengan angka.");
+        return;
+    }
+
+    const payload = {
+        redirect_uri: document.getElementById('editRedirectUri').value,
+        custom_key: customKey,
+        rules: {
+            expire_type: document.getElementById('editRulesType').value === 'expire_date' ? 'date' : 'click',
+            expire_date: document.getElementById('editExpireDate').value || null,
+            max_click: parseInt(document.getElementById('editMaxClick').value) || 0
+        }
+    };
+
+    try {
+        const response = await fetch(`http://localhost:8000/api/v1/links/${linkId}/update`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (result.status) {
+            alert('Link berhasil diperbarui!');
+            location.reload();
+        } else {
+            // MENANGANI ERROR DARI SERVER (seperti "Custom Key cannot start with a number.")
+            alert('Gagal: ' + result.message); 
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+});
+
+function closeModal() {
+    const modal = document.getElementById('editModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+// --- LOGIKA MODAL DELETE ---
+function openDeleteModal(linkId) {
+    const modal = document.getElementById('deleteModal');
+    const confirmBtn = document.getElementById('confirmDeleteBtn');
+
+    // Set ID ke tombol confirm agar tahu link mana yang dihapus
+    confirmBtn.onclick = function() {
+        executeDelete(linkId);
+    };
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closeDeleteModal() {
+    const modal = document.getElementById('deleteModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+// Fungsi eksekusi hapus (Contoh Fetch)
+async function executeDelete(linkId) {
+    try {
+        const response = await fetch(`http://localhost:8000/api/v1/links/${linkId}/delete`, {
+            method: 'DELETE'
+        });
+        if (response.ok) {
+            alert("Link berhasil dihapus!");
+            window.location.href = '/index'; // Redirect setelah hapus
+        }
+    } catch (err) {
+        console.error("Gagal menghapus:", err);
+    }
+}
+
+document.getElementById('editRulesType').addEventListener('change', function() {
+    const clickContainer = document.getElementById('containerMaxClick');
+    const dateContainer = document.getElementById('containerExpireDate');
+
+    if (this.value === 'max_click') {
+        clickContainer.classList.remove('hidden');
+        dateContainer.classList.add('hidden');
+    } else {
+        clickContainer.classList.add('hidden');
+        dateContainer.classList.remove('hidden');
+    }
+});
+    </script>
+</body>
+</html>

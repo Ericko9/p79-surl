@@ -5,307 +5,263 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - URL Shortener</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        input { transition: all 0.3s ease; }
+        .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        #snackbar-container { position: fixed; top: 20px; right: 20px; z-index: 100; display: flex; flex-direction: column; gap: 10px; }
+    </style>
 </head>
-<body>
+<body class="bg-gradient-to-br from-gray-50 to-gray-200 min-h-screen">
+
 <%- include('./partials/navbar', { dashboard: false, shortens: false, about: true, community: false, contributors: false }) -%>
-<div class="bg-gradient-to-br from-gray-50 to-gray-200 min-h-screen flex items-center justify-center p-5">
+
+<div id="snackbar-container"></div>
+
+<div class="flex items-center justify-center p-5">
     <div class="max-w-7xl w-full grid grid-cols-1 md:grid-cols-[1.2fr_1fr] gap-12 items-stretch my-[90px]">
-        <!-- Left Panel -->
-        <div class="bg-gradient-to-br from-blue-600 to-blue-700 
-        rounded-3xl shadow-2xl p-16 text-white 
-        relative overflow-hidden min-h-[700px] flex flex-col">
-
-            <!-- Decorative background -->
-            <div class="absolute inset-0 opacity-10">
-                <div class="absolute top-10 left-10 w-20 h-20 bg-white rounded-full"></div>
-                <div class="absolute bottom-20 right-20 w-32 h-32 bg-white rounded-full"></div>
-                <div class="absolute top-1/2 left-1/4 w-16 h-16 bg-white rounded-full"></div>
+        
+        <div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-3xl shadow-2xl text-white relative overflow-hidden min-h-[550px] flex flex-col">
+    
+            <div class="absolute inset-0 pointer-events-none">
+                <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-white/10 rounded-full blur-[80px]"></div>
+                <div class="absolute bottom-[10%] right-[5%] w-[50%] h-[50%] bg-white/10 rounded-full blur-[100px]"></div>
             </div>
-
-            <!-- Content -->
-            <div class="relative z-10 flex flex-col h-full">
-                <div class="flex-shrink-0">
-                    <h1 class="text-4xl font-bold mb-4 leading-tight">
-                        Shorten Your Links, Track Every Click!
-                    </h1>
-                    <p class="text-lg opacity-95 leading-relaxed">
-                        Create branded short links and custom QR codes instantly.<br>Monitor performance with real-time analytics.
-                    </p>
-                </div>
-
-                <div class="flex-grow"></div>
-
-                <div class="flex justify-center items-end flex-shrink-0 mt-8">
+        
+            <div class="relative z-10 p-12 pb-20">
+                <h1 class="text-4xl font-bold mb-4 leading-tight">
+                    Shorten Your Links, Track Every Click!
+                </h1>
+                <p class="text-lg opacity-90 leading-relaxed max-w-md">
+                    Create branded short links and custom QR codes instantly.
+                    Monitor performance with real-time analytics.
+                </p>
+            </div>
+        
+            <div class="flex-grow"></div>
+        
+            <div class="relative z-10 px-0 pb-0 flex justify-center items-end">
+                <div class="w-full max-w-2xl transition-all duration-500 hover:scale-[1.02]">
                     <img 
                         src="/images/Image4.png" 
-                        alt="Dashboard Preview"
-                        class="w-full max-w-lg h-auto object-contain rounded-xl shadow-xl"
+                        alt="Dashboard Preview" 
+                        class="w-full h-auto object-contain block drop-shadow-[0_-15px_35px_rgba(0,0,0,0.3)]"
+                        style="margin-bottom: -1px;" 
                     >
                 </div>
             </div>
         </div>
 
-        <!-- Right Panel -->
         <div class="flex flex-col justify-center p-8 md:p-12">
             <div class="max-w-md w-full mx-auto">
-                <div class="text-center">
+                <div class="text-center mb-8">
                     <h2 class="text-3xl font-bold text-black mb-2">Welcome Back!</h2>
-                    <p class="text-gray-400 text-md mb-8">
-                        Enter your email and password to manage your links.
-                    </p>
+                    <p class="text-gray-400">Enter your email and password to manage your links.</p>
                 </div>
 
-                <!-- Message Display -->
-                <div id="message" class="mb-4 p-3 rounded-lg text-center font-medium hidden"></div>
-
-                <form id="loginForm">
-                    <!-- Email Field -->
+                <form id="loginForm" novalidate>
                     <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Email<span class="text-red-500">*</span>
-                        </label>
-                        <input 
-                            type="email" 
-                            id="email" 
-                            placeholder="name@email.com"
-                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all"
-                            required
-                        >
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email<span class="text-red-500">*</span></label>
+                        <input type="email" id="email" placeholder="name@email.com" class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none transition-all">
+                        <p id="email-val-error" class="hidden text-red-500 text-xs mt-2">⚠️ Please enter a valid email address.</p>
                     </div>
 
-                    <!-- Password Field -->
                     <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Password<span class="text-red-500">*</span>
-                        </label>
-                        <input 
-                            type="password" 
-                            id="password" 
-                            placeholder="Enter your password"
-                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all"
-                            required
-                        >
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Password<span class="text-red-500">*</span></label>
+                        <input type="password" id="password" placeholder="Enter your password" class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none transition-all">
+                        <p id="password-val-error" class="hidden text-red-500 text-xs mt-2">⚠️ The email or password you entered is incorrect.</p>
                     </div>
 
-                    <!-- Remember Me & Forgot Password -->
                     <div class="flex items-center justify-between mb-6 text-sm">
                         <label class="flex items-center gap-2 text-gray-600 cursor-pointer">
-                            <input 
-                                type="checkbox" 
-                                id="remember"
-                                class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                            >
+                            <input type="checkbox" id="remember" class="w-4 h-4 text-blue-600 border-gray-300 rounded">
                             <span>Remember Me</span>
                         </label>
-                        <a href="#" id="forgotPasswordBtn" class="text-red-500 font-medium hover:underline">
-                            Forgot Password?
-                        </a>
+                        <a href="#" id="forgotPasswordBtn" class="text-red-500 font-medium hover:underline">Forgot Password?</a>
                     </div>
 
-                    <!-- Login Button -->
-                    <button 
-                        type="submit" 
-                        id="loginBtn"
-                        class="w-full py-3.5 bg-gray-300 text-white font-semibold rounded-full transition-all cursor-not-allowed"
-                        disabled
-                    >
-                        Log In
-                    </button>
-
-                    <!-- Sign Up Link -->
+                    <button type="submit" id="loginBtn" class="w-full py-3.5 bg-gray-300 text-white font-semibold rounded-full transition-all cursor-not-allowed" disabled>Log In</button>
+                    
                     <div class="text-center mt-6 text-sm text-gray-600">
-                        Don't have an account yet? 
-                        <a href="/register" class="text-blue-600 font-semibold hover:underline">
-                            Sign Up
-                        </a>
+                        Don't have an account? <a href="/register" class="text-blue-600 font-semibold hover:underline">Sign Up</a>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- Forgot Password Modal -->
-    <div id="forgotModal"
-        class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 backdrop-blur-sm">
-        <div class="bg-white w-full max-w-md rounded-3xl shadow-xl overflow-hidden animate-fadeIn">
-            <!-- Header -->
-            <div class="relative px-8 py-8 border-b border-gray-200">
-                <button id="closeForgotModal"
-                    class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center
-                           rounded-full border border-gray-300 text-gray-500
-                           hover:bg-gray-100 hover:text-gray-700 transition text-xl">
-                    &times;
+    <div id="forgotModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-xl overflow-hidden animate-fadeIn p-8 relative">
+            <button id="closeForgotModal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            <h3 class="text-2xl font-bold text-gray-800 mb-2 text-center">Reset Password</h3>
+            <p class="text-gray-600 mb-6 text-center text-sm">Enter your registered email address and we'll send you a link to reset your password.</p>
+            
+            <form id="resetForm" novalidate>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email <span class="text-red-500">*</span></label>
+                    <input type="email" id="resetEmail" placeholder="name@email.com" class="w-full px-5 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100 transition">
+                    <p id="reset-email-error" class="hidden text-red-500 text-xs mt-2">⚠️ Please enter a valid email address.</p>
+                </div>
+                <button type="submit" id="resetSubmitBtn" class="w-full py-3.5 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 transition flex items-center justify-center gap-2">
+                    <span>Send Reset Link</span>
                 </button>
-            </div>
-
-            <!-- Content -->
-            <div class="px-8 pb-6 pt-1">
-                <h3 class="text-2xl font-bold text-gray-800 text-center py-1">
-                    Reset Password
-                </h3>
-
-                <p class="text-gray-600 text-center mb-6 leading-relaxed">
-                    Enter your registered email address and we'll send you a link to reset your password.
-                </p>
-
-                <form id="resetForm">
-                    <!-- Email -->
-                    <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Email <span class="text-red-500">*</span>
-                        </label>
-                        <input
-                            type="email"
-                            id="resetEmail"
-                            placeholder="name@email.com"
-                            class="w-full px-5 py-3 border border-gray-300 rounded-xl
-                                   text-gray-700 placeholder-gray-400
-                                   focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition"
-                            required
-                        >
-                    </div>
-
-                    <!-- Button -->
-                    <button
-                        type="submit"
-                        class="w-full flex items-center justify-center gap-3
-                               py-3.5 rounded-full bg-blue-600 text-white text-lg font-semibold
-                               hover:bg-blue-700 transition">
-                        Send Reset Link
-                        <!-- Arrow Icon -->
-                        <svg xmlns="http://www.w3.org/2000/svg"
-                             class="w-5 h-5"
-                             fill="none"
-                             viewBox="0 0 24 24"
-                             stroke="currentColor"
-                             stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                  d="M5 12h14m-6-6l6 6-6 6" />
-                        </svg>
-                    </button>
-                </form>
-            </div>
+            </form>
         </div>
     </div>
 </div>
+
 <%- include('./partials/footer') -%>
 
 <script>
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-    const loginBtn = document.getElementById('loginBtn');
-    const loginForm = document.getElementById('loginForm');
-    const message = document.getElementById('message');
-    const rememberCheckbox = document.getElementById('remember');
+    // --- Elemen Global ---
+    const snackbarContainer = document.getElementById('snackbar-container');
 
-    function checkInputs() {
-        if (emailInput.value.trim() !== '' && passwordInput.value.trim() !== '') {
-            loginBtn.disabled = false;
-            loginBtn.classList.remove('bg-gray-300', 'cursor-not-allowed');
-            loginBtn.classList.add('bg-gradient-to-r', 'from-blue-600', 'to-blue-700', 'hover:shadow-lg', 'hover:-translate-y-0.5', 'cursor-pointer');
+    // --- Fungsi Alert (Snackbar) Sesuai Gambar ---
+    function showSnackbar(title, message, type = 'success') {
+        const id = Date.now();
+        const bgColor = type === 'success' ? 'bg-[#EBFBEE]' : 'bg-[#FFF5F5]';
+        const borderColor = type === 'success' ? 'border-[#D3F9D8]' : 'border-[#FFE3E3]';
+        const textColor = type === 'success' ? 'text-[#2B8A3E]' : 'text-[#C92A2A]';
+        const icon = type === 'success' ? 
+            `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>` :
+            `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>`;
+
+        const html = `
+            <div id="snack-${id}" class="${bgColor} border ${borderColor} ${textColor} p-4 rounded-xl shadow-lg flex items-start gap-3 min-w-[320px] max-w-[400px] animate-fadeIn">
+                <div class="mt-0.5">${icon}</div>
+                <div class="flex-1">
+                    <p class="font-bold text-sm">${title}!</p>
+                    <p class="text-xs opacity-90 leading-relaxed">${message}</p>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-current opacity-50 hover:opacity-100">&times;</button>
+            </div>
+        `;
+        snackbarContainer.insertAdjacentHTML('beforeend', html);
+        setTimeout(() => document.getElementById(`snack-${id}`)?.remove(), 5000);
+    }
+
+    // --- Helper UI ---
+    function updateFieldStatus(input, errorEl, status) {
+        input.classList.remove('border-red-400', 'bg-red-50', 'border-green-500', 'bg-green-50', 'border-gray-300');
+        errorEl.classList.add('hidden');
+        if (status === 'error') {
+            input.classList.add('border-red-400', 'bg-red-50');
+            errorEl.classList.remove('hidden');
+        } else if (status === 'success') {
+            input.classList.add('border-green-500', 'bg-green-50');
         } else {
-            loginBtn.disabled = true;
-            loginBtn.classList.add('bg-gray-300', 'cursor-not-allowed');
-            loginBtn.classList.remove('bg-gradient-to-r', 'from-blue-600', 'to-blue-700', 'hover:shadow-lg', 'hover:-translate-y-0.5', 'cursor-pointer');
+            input.classList.add('border-gray-300');
         }
     }
 
-    emailInput.addEventListener('input', checkInputs);
-    passwordInput.addEventListener('input', checkInputs);
+    // --- Logika Login ---
+    const loginEmail = document.getElementById('email');
+    const loginPass = document.getElementById('password');
+    const loginBtn = document.getElementById('loginBtn');
+    const emailError = document.getElementById('email-val-error');
+    const passError = document.getElementById('password-val-error');
 
-    loginForm.addEventListener('submit', async (e) => {
+    function validateEmail(email) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
+
+    const checkInputs = () => {
+        const isFilled = loginEmail.value.trim() !== '' && loginPass.value.trim() !== '';
+        loginBtn.disabled = !isFilled;
+        loginBtn.className = isFilled ? 
+            "w-full py-3.5 bg-blue-600 text-white font-semibold rounded-full cursor-pointer hover:bg-blue-700 shadow-md" : 
+            "w-full py-3.5 bg-gray-300 text-white font-semibold rounded-full cursor-not-allowed";
+    }
+
+    loginEmail.addEventListener('input', () => { updateFieldStatus(loginEmail, emailError, 'neutral'); checkInputs(); });
+    loginPass.addEventListener('input', () => { updateFieldStatus(loginPass, passError, 'neutral'); checkInputs(); });
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
         e.preventDefault();
+        if (!validateEmail(loginEmail.value)) {
+            updateFieldStatus(loginEmail, emailError, 'error');
+            return;
+        }
 
-        // Disable button during request
         loginBtn.disabled = true;
-        loginBtn.textContent = 'Logging in...';
-
-        const payload = {
-            email: emailInput.value,
-            password: passwordInput.value
-        };
+        loginBtn.innerText = "Processing...";
 
         try {
             const res = await fetch('/api/v1/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                credentials: 'include', // Important: untuk mengirim dan menerima cookies
-                body: JSON.stringify(payload)
+                body: JSON.stringify({ email: loginEmail.value, password: loginPass.value })
             });
-
             const data = await res.json();
 
-            // Check HTTP status code (200 = OK)
             if (res.ok && data.status) {
-                message.textContent = data.message || 'Login successfully! 🎉';
-                message.className = 'mb-4 p-3 rounded-lg text-center font-medium bg-green-100 text-green-700';
-                message.classList.remove('hidden');
-
-                // Redirect setelah login berhasil
-                setTimeout(() => {
-                    window.location.href = '/index'; // Sesuaikan dengan route dashboard Anda
-                }, 1500);
+                updateFieldStatus(loginEmail, emailError, 'success');
+                updateFieldStatus(loginPass, passError, 'success');
+                showSnackbar('Success', 'You’re logged in.', 'success');
+                setTimeout(() => window.location.href = '/index', 1500);
             } else {
-                message.textContent = data.message || 'Login failed. Please check your credentials.';
-                message.className = 'mb-4 p-3 rounded-lg text-center font-medium bg-red-100 text-red-700';
-                message.classList.remove('hidden');
-                
-                // Re-enable button
+                updateFieldStatus(loginPass, passError, 'error');
+                showSnackbar('Failed', 'You’re not logged in.', 'error');
                 loginBtn.disabled = false;
-                loginBtn.textContent = 'Log In';
-                checkInputs();
+                loginBtn.innerText = "Log In";
             }
-        } catch (error) {
-            message.textContent = 'Network error. Please try again.';
-            message.className = 'mb-4 p-3 rounded-lg text-center font-medium bg-red-100 text-red-700';
-            message.classList.remove('hidden');
-            
-            // Re-enable button
+        } catch (err) {
+            showSnackbar('Failed', 'Connection error.', 'error');
             loginBtn.disabled = false;
-            loginBtn.textContent = 'Log In';
-            checkInputs();
+            loginBtn.innerText = "Log In";
         }
     });
 
-    // Modal handlers
-    const forgotBtn = document.getElementById('forgotPasswordBtn');
+    // --- Logika Forgot Password ---
     const forgotModal = document.getElementById('forgotModal');
-    const closeForgotModal = document.getElementById('closeForgotModal');
-    const resetForm = document.getElementById('resetForm');
+    const resetEmailInput = document.getElementById('resetEmail');
+    const resetEmailError = document.getElementById('reset-email-error');
+    const resetSubmitBtn = document.getElementById('resetSubmitBtn');
 
-    forgotBtn.addEventListener('click', (e) => {
+    document.getElementById('forgotPasswordBtn').addEventListener('click', (e) => {
         e.preventDefault();
-        forgotModal.classList.remove('hidden');
-        forgotModal.classList.add('flex');
+        forgotModal.classList.replace('hidden', 'flex');
     });
 
-    closeForgotModal.addEventListener('click', () => {
-        forgotModal.classList.add('hidden');
-        forgotModal.classList.remove('flex');
+    document.getElementById('closeForgotModal').addEventListener('click', () => {
+        forgotModal.classList.replace('flex', 'hidden');
     });
 
-    forgotModal.addEventListener('click', (e) => {
-        if (e.target === forgotModal) {
-            forgotModal.classList.add('hidden');
-            forgotModal.classList.remove('flex');
+    document.getElementById('resetForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = resetEmailInput.value.trim();
+
+        if (!validateEmail(email)) {
+            updateFieldStatus(resetEmailInput, resetEmailError, 'error');
+            return;
+        }
+
+        resetSubmitBtn.disabled = true;
+        resetSubmitBtn.innerText = "Sending...";
+
+        try {
+            const res = await fetch('http://localhost:8000/api/v1/auth/forgot-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+            const data = await res.json();
+
+            if (res.ok && data.status) {
+                showSnackbar('Success', 'We’ve sent a reset link to your email. Please check your inbox (and spam folder) to continue.', 'success');
+                forgotModal.classList.replace('flex', 'hidden');
+                document.getElementById('resetForm').reset();
+            } else {
+                updateFieldStatus(resetEmailInput, resetEmailError, 'error');
+                showSnackbar('Failed', 'We couldn’t send the reset link. Please check your email address.', 'error');
+            }
+        } catch (err) {
+            showSnackbar('Failed', 'Connection error.', 'error');
+        } finally {
+            resetSubmitBtn.disabled = false;
+            resetSubmitBtn.innerText = "Send Reset Link";
         }
     });
 
-    resetForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        alert('Reset link sent! (Demo)');
-        forgotModal.classList.add('hidden');
-        forgotModal.classList.remove('flex');
-    });
+    window.onclick = (e) => { if (e.target == forgotModal) forgotModal.classList.replace('flex', 'hidden'); };
 </script>
-
-<style>
-    @media (max-width: 768px) {
-        .max-w-7xl {
-            grid-template-columns: 1fr;
-        }
-    }
-</style>
-
 </body>
 </html>
