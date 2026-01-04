@@ -281,7 +281,7 @@
     
             try {
                 // A. Header Details & Action Buttons
-                const linkRes = await fetch(`http://localhost:8000/api/v1/links/${linkId}/detail`);
+                const linkRes = await fetch(`https://surl.jiwamu.de/api/v1/links/${linkId}/detail`);
                 if (linkRes.ok) {
                     const { data } = await linkRes.json();
                     
@@ -302,7 +302,7 @@
                 }
     
                 // B. Summary Stats (UI Tetap Sama)
-                const sumRes = await fetch(`http://localhost:8000/api/v1/analytics/${linkId}/summary${queryParams}`);
+                const sumRes = await fetch(`https://surl.jiwamu.de/api/v1/analytics/${linkId}/summary${queryParams}`);
                 if (sumRes.ok) {
                     const { data } = await sumRes.json();
                     document.getElementById('statsTotalVisits').textContent = data.total_visits.current_period;
@@ -321,7 +321,7 @@
                 }
     
                 // C. Time Series & Compare
-                const tsRes = await fetch(`http://localhost:8000/api/v1/analytics/${linkId}/time-series${queryParams}`);
+                const tsRes = await fetch(`https://surl.jiwamu.de/api/v1/analytics/${linkId}/time-series${queryParams}`);
                 if (tsRes.ok) {
                     const { data } = await tsRes.json();
                     analyticsChart.data.labels = data.map(i => i.display_label);
@@ -331,7 +331,7 @@
                 }
     
                 // D. Locations
-                const locRes = await fetch(`http://localhost:8000/api/v1/analytics/${linkId}/location${queryParams}`);
+                const locRes = await fetch(`https://surl.jiwamu.de/api/v1/analytics/${linkId}/location${queryParams}`);
                 if (locRes.ok) {
                     const { data } = await locRes.json();
                     renderLocationTable(data.table);
@@ -497,7 +497,7 @@ document.getElementById('editLinkForm').addEventListener('submit', async functio
     };
 
     try {
-        const response = await fetch(`http://localhost:8000/api/v1/links/${linkId}/update`, {
+        const response = await fetch(`https://surl.jiwamu.de/api/v1/links/${linkId}/update`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -546,7 +546,7 @@ function closeDeleteModal() {
 // Fungsi eksekusi hapus (Contoh Fetch)
 async function executeDelete(linkId) {
     try {
-        const response = await fetch(`http://localhost:8000/api/v1/links/${linkId}/delete`, {
+        const response = await fetch(`https://surl.jiwamu.de/api/v1/links/${linkId}/delete`, {
             method: 'DELETE'
         });
         if (response.ok) {
