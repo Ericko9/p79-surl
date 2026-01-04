@@ -50,9 +50,9 @@ const createLink = async (userId, payload) => {
 
       // default link rule
       const defaultRules = {
-        expire_type: 'max-click',
+        expire_type: 'max_click',
         expire_date: null,
-        max_click: 500,
+        max_click: 200,
       };
 
       // concate default dengan input user (if any)
@@ -174,7 +174,15 @@ const updateLink = async (linkId, userId, payload) => {
 
   try {
     return await db.transaction(async (tx) => {
+      const oldLink = await tx.query.links.findFirst({
+        where: and(eq(links.id, linkId), eq(links.userId, userId)),
+        with: { qrCode: true },
+      });
+
+      if (!oldLink) throw new AppError('Link not found!', 404);
+
       const updateData = {};
+      let qrDeleted = false;
 
       if (url) {
         const normalized = normalizeUrl(url); // tambah https:// jika belum
@@ -183,7 +191,7 @@ const updateLink = async (linkId, userId, payload) => {
         updateData.redirectUri = normalized;
       }
 
-      if (customKey) {
+      if (customKey && customKey !== oldLink.shortKey) {
         validateKeyFormat(customKey); // cek format key custom
 
         // cek apakah short link sudah ada
@@ -195,6 +203,12 @@ const updateLink = async (linkId, userId, payload) => {
 
         updateData.shortKey = customKey;
         updateData.isCustom = true;
+
+        if (oldLink.qrCode) {
+          // hapus data qr di db
+          await tx.delete(linkQrCodes).where(eq(linkQrCodes.linkId, linkId));
+          qrDeleted = true;
+        }
       }
 
       if (Object.keys(updateData).length > 0) {
@@ -224,14 +238,15 @@ const updateLink = async (linkId, userId, payload) => {
       if (rules) {
         const updateRulesData = {};
 
-        if (rules.expire_type !== undefined)
-          updateRulesData.expireType = rules.expire_type;
-
-        if (rules.expire_date !== undefined)
-          updateRulesData.expireDate = rules.expire_date;
-
-        if (rules.max_click !== undefined)
+        if (rules.expire_type === 'max_click') {
+          updateRulesData.expireType = 'max_click';
           updateRulesData.maxClick = rules.max_click;
+          updateRulesData.expireDate = null;
+        } else if (rules.expire_type === 'expire_date') {
+          updateRulesData.expireType = 'expire_date';
+          updateRulesData.expireDate = rules.expire_date;
+          updateRulesData.maxClick = null;
+        }
 
         // update data link rule di db
         if (Object.keys(updateRulesData).length > 0) {
@@ -243,6 +258,15 @@ const updateLink = async (linkId, userId, payload) => {
             })
             .where(eq(linkRules.linkId, linkId));
         }
+      }
+
+      if (qrDeleted) {
+        // hapus qr di storage jika ada
+        cloudinary.uploader
+          .destroy(`shortlink_qr/qr_${oldLink.shortKey}`)
+          .catch((err) =>
+            console.warn('Cloudinary cleanup skipped:', err.message)
+          );
       }
 
       return await tx.query.links.findFirst({
@@ -302,8 +326,8 @@ const getRedirectUrl = async (shortKey) => {
   // validasi rules
   const rules = link.rules;
   if (rules) {
-    // validasi max click (type expire = max-click)
-    if (rules.expireType === 'max-click') {
+    // validasi max click (type expire = max_click)
+    if (rules.expireType === 'max_click') {
       if (link.clickCount >= rules.maxClick) {
         throw new AppError(
           'This link has reached its maximum click limit.',
@@ -312,8 +336,8 @@ const getRedirectUrl = async (shortKey) => {
       }
     }
 
-    // validasi Expire Date (type expire = date)
-    if (rules.expireType === 'date') {
+    // validasi expire date (type expire = expire_date)
+    if (rules.expireType === 'expire_date') {
       if (rules.expireDate && new Date() > new Date(rules.expireDate)) {
         throw new AppError('This link has expired.', 410);
       }
@@ -333,8 +357,16 @@ const getRedirectUrl = async (shortKey) => {
 };
 
 // RECORD ANALYTICS DATA
-const recordAnalytics = async (linkId, { ip, userAgent, referrer }) => {
-  const geo = geoip.lookup(ip);
+const recordAnalytics = async (
+  linkId,
+  { ip, userAgent, referrer, cityHeader }
+) => {
+  let cityName = cityHeader;
+
+  if (!cityName || cityName === 'Unknown') {
+    const geo = geoip.lookup(ip);
+    cityName = geo ? geo.city : 'Unknown';
+  }
 
   // parser data untuk mengambil browser dan os
   const parser = new UAParser(userAgent);
@@ -347,8 +379,8 @@ const recordAnalytics = async (linkId, { ip, userAgent, referrer }) => {
     ipAddress: ip,
     browser: ua.browser.name || 'Unknown',
     os: ua.os.name || 'Unknown',
-    referrer: referrer,
-    city: geo ? geo.city : 'Unknown',
+    referrer: referrer || 'Direct',
+    city: cityName,
     accessedAt: new Date().toISOString(),
   });
 };

@@ -8,9 +8,10 @@ const validateKeyFormat = (key) => {
     throw new AppError('Custom Key cannot start with a number.', 400);
   }
 
-  if (/\W/g.test(key)) {
+  // cek karakter tidak boleh selain huruf, angka, underscore (_), dan dash (-)
+  if (/[^a-zA-Z0-9_-]/.test(key)) {
     throw new AppError(
-      'Custom key can only contain letters, numbers, and underscores.',
+      'Custom key can only contain letters, numbers, underscores, and hyphens.',
       400
     );
   }

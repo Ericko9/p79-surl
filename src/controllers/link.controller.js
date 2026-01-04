@@ -152,13 +152,14 @@ const redirect = asyncHandler(async (req, res) => {
     req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
   const userAgent = req.headers['user-agent'];
   const referrer = req.headers['referer'] || null;
+  const cityHeader = req.headers['x-vercel-ip-city'];
 
   // call getRedirectUrl service
   const link = await linkService.getRedirectUrl(shortKey);
 
   // insert data analytics di background
   linkService
-    .recordAnalytics(link.id, { ip, userAgent, referrer })
+    .recordAnalytics(link.id, { ip, userAgent, referrer, cityHeader })
     .catch((err) => {
       console.error('Failed to record analytics:', err);
     });
