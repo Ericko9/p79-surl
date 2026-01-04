@@ -64,7 +64,7 @@
     <%- include('./partials/deletemodal') %>
 
 <script>
-    const API_URL = 'http://localhost:8000/api/v1/links/my-links';
+    const API_URL = 'https://surl.jiwamu.de/api/v1/links/my-links';
     const BASE_SHORT_URL = 'https://surl.jiwamu.de/';
     const MAX_ITEMS = 5; // Menampilkan 5 link terbaru di Home
 
@@ -99,7 +99,7 @@
                     </div>
                     
                     <div class="flex items-center gap-3">
-                        <a href="/stats/${link.id}" class="w-9 h-9 flex items-center justify-center bg-cyan-50 text-cyan-600 rounded-xl hover:bg-cyan-100 transition" title="Analytics">
+                        <a href="/analytics/${link.id}" class="w-9 h-9 flex items-center justify-center bg-cyan-50 text-cyan-600 rounded-xl hover:bg-cyan-100 transition" title="Analytics">
                             <i class="fas fa-chart-simple text-sm"></i>
                         </a>
 
