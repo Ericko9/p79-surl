@@ -80,7 +80,40 @@ router.delete(
   linkOwnership,
   linkController.deleteLink
 );
-router.post('/links/:id/generate-qr', auth, linkController.generateQr);
+router.post(
+  '/links/:id/generate-qr',
+  auth,
+  linkOwnership,
+  linkController.generateQr
+);
+router.get(
+  '/links/:id/qr-detail',
+  auth,
+  linkOwnership,
+  linkController.getQrDetail
+);
+
+// ANALYTIC MANAGEMENT
+const analyticsController = require('../controllers/analytic.controller');
+
+router.get(
+  '/analytics/:link_id/summary',
+  auth,
+  linkOwnership,
+  analyticsController.getSummary
+);
+router.get(
+  '/analytics/:link_id/location',
+  auth,
+  linkOwnership,
+  analyticsController.getLocation
+);
+router.get(
+  '/analytics/:link_id/time-series',
+  auth,
+  linkOwnership,
+  analyticsController.getTimeSeries
+);
 
 // MAILER MANAGEMENT
 const mailerController = require('../controllers/mailer.controller');

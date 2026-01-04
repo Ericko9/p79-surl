@@ -153,7 +153,8 @@
   // ========== NAVBAR VISIBILITY ==========
   (function() {
     var currentPath = window.location.pathname;
-    var isLoginOrRegister = currentPath === '/' || currentPath === '/register' || currentPath === '/login' || currentPath === '/resetpassword' || currentPath === '/Register';
+    var isLoginOrRegister = currentPath === '/' || currentPath === '/register' || currentPath === '/login' 
+    || currentPath === '/resetpassword' || currentPath === '/Register' || currentPath === '/reset-password';
     
     var navbarDashboard = document.getElementById('navbar-dashboard');
     var navbarAuth = document.getElementById('navbar-auth');

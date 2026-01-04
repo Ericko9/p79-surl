@@ -62,6 +62,10 @@ router.get('/link', function(req, res, next) {
   res.render('link')
 })
 
+router.get('/analytics/:link_id', (req, res) => {  
+  res.render('analytics')
+})
+
 const linkController = require('../controllers/link.controller');
 
 router.get('/:shortKey', linkController.redirect);

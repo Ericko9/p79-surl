@@ -5,178 +5,81 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - URL Shortener</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        input { transition: all 0.3s ease; }
+        .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        #snackbar-container { position: fixed; top: 20px; right: 20px; z-index: 100; display: flex; flex-direction: column; gap: 10px; }
+    </style>
 </head>
-<body>
+<body class="bg-gradient-to-br from-gray-50 to-gray-200 min-h-screen">
+
 <%- include('./partials/navbar', { dashboard: false, shortens: false, about: true, community: false, contributors: false }) -%>
-<div class="bg-gradient-to-br from-gray-50 to-gray-200 min-h-screen flex items-center justify-center p-5">
+
+<div id="snackbar-container"></div>
+
+<div class="flex items-center justify-center p-5">
     <div class="max-w-7xl w-full grid grid-cols-1 md:grid-cols-[1.2fr_1fr] gap-12 items-stretch my-[90px]">
-        <!-- Left Panel -->
-        <div class="bg-gradient-to-br from-blue-600 to-blue-700 
-        rounded-3xl shadow-2xl p-16 text-white 
-        relative overflow-hidden min-h-[700px] flex flex-col">
-
-            <!-- Decorative background -->
-            <div class="absolute inset-0 opacity-10">
-                <div class="absolute top-10 left-10 w-20 h-20 bg-white rounded-full"></div>
-                <div class="absolute bottom-20 right-20 w-32 h-32 bg-white rounded-full"></div>
-                <div class="absolute top-1/2 left-1/4 w-16 h-16 bg-white rounded-full"></div>
+        
+        <div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-3xl shadow-2xl text-white relative overflow-hidden min-h-[600px] flex flex-col">
+            <div class="absolute inset-0 pointer-events-none">
+                <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-white/10 rounded-full blur-[80px]"></div>
+                <div class="absolute bottom-[10%] right-[5%] w-[50%] h-[50%] bg-white/10 rounded-full blur-[100px]"></div>
             </div>
-
-            <!-- Content -->
-            <div class="relative z-10 flex flex-col h-full">
-                <div class="flex-shrink-0">
-                    <h1 class="text-4xl font-bold mb-4 leading-tight">
-                        Shorten Your Links, Track Every Click!
-                    </h1>
-                    <p class="text-lg opacity-95 leading-relaxed">
-                        Create branded short links and custom QR codes instantly.<br>Monitor performance with real-time analytics.
-                    </p>
-                </div>
-
-                <div class="flex-grow"></div>
-
-                <div class="flex justify-center items-end flex-shrink-0 mt-8">
-                    <img 
-                        src="/images/Image4.png" 
-                        alt="Dashboard Preview"
-                        class="w-full max-w-lg h-auto object-contain rounded-xl shadow-xl"
-                    >
-                </div>
+            <div class="relative z-10 p-12 pb-8 text-center md:text-left">
+                <h1 class="text-4xl font-bold mb-4 leading-tight">Shorten Your Links, Track Every Click!</h1>
+                <p class="text-lg opacity-90 max-w-md mx-auto md:mx-0">Create branded short links and custom QR codes instantly.</p>
+            </div>
+            <div class="flex-grow"></div>
+            <div class="relative z-10 px-0 pb-0 flex justify-center items-end">
+                <img src="/images/Image4.png" alt="Dashboard Preview" class="w-full max-w-2xl h-auto object-contain block drop-shadow-[0_-15px_35px_rgba(0,0,0,0.3)]" style="margin-bottom: -1px;">
             </div>
         </div>
 
-        <!-- Right Panel -->
-        <div class="flex flex-col justify-center p-8 md:p-12">
+        <div class="flex flex-col justify-center p-8 md:p-12 bg-white rounded-3xl md:bg-transparent">
             <div class="max-w-md w-full mx-auto">
-                <div class="text-center">
+                <div class="text-center mb-8">
                     <h2 class="text-3xl font-bold text-black mb-2">Create Your Account</h2>
-                    <p class="text-gray-400 text-md mb-8">
-                        Join thousands of users and start shortening links in seconds.
-                    </p>
+                    <p class="text-gray-400">Join thousands of users and start shortening links.</p>
                 </div>
 
-                <!-- Message Display -->
-                <div id="message" class="mb-4 p-3 rounded-lg text-center font-medium hidden"></div>
-
-                <form id="registerForm">
-                    <!-- Username Field -->
-                    <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Username<span class="text-red-500"> *</span>
-                        </label>
-                        <input 
-                            type="text" 
-                            id="username" 
-                            placeholder="Choose a unique username"
-                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all"
-                            required
-                        >
+                <form id="registerForm" novalidate>
+                    <div class="mb-5">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Username<span class="text-red-500"> *</span></label>
+                        <input type="text" id="username" placeholder="Choose a username" class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none transition-all">
+                        <p id="username-error" class="hidden text-red-500 text-xs mt-2 font-medium"></p>
                     </div>
 
-                    <!-- Email Field -->
-                    <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Email<span class="text-red-500"> *</span>
-                        </label>
-                        <input 
-                            type="email" 
-                            id="email" 
-                            placeholder="e.g., alex@company.com"
-                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all"
-                            required
-                        >
+                    <div class="mb-5">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email<span class="text-red-500"> *</span></label>
+                        <input type="email" id="email" placeholder="e.g., alex@company.com" class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none transition-all">
+                        <p id="email-error" class="hidden text-red-500 text-xs mt-2 font-medium"></p>
                     </div>
 
-                    <!-- Password Field -->
-                    <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Password<span class="text-red-500">*</span>
-                        </label>
-                    
-                        <input 
-                            type="password" 
-                            id="password" 
-                            placeholder="Create a strong password"
-                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl 
-                                   focus:outline-none focus:border-blue-500 
-                                   focus:ring-4 focus:ring-blue-100 transition-all"
-                            required
-                        >
-                    
+                    <div class="mb-5">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Password<span class="text-red-500">*</span></label>
+                        <input type="password" id="password" placeholder="Create password" class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none transition-all">
+                        <p id="password-error" class="hidden text-red-500 text-xs mt-2 font-medium"></p>
                         <p class="ms-2 mt-2 flex items-start gap-2 text-sm text-blue-600">
-                            <svg 
-                                xmlns="http://www.w3.org/2000/svg" 
-                                viewBox="0 0 20 20" 
-                                fill="currentColor" 
-                                class="w-4 h-4 mt-[2px] flex-shrink-0"
-                                aria-hidden="true"
-                            >
-                                <path 
-                                    fill-rule="evenodd" 
-                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-11.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM9.25 8.5a.75.75 0 000 1.5h.5v4.25a.75.75 0 001.5 0V9.25a.75.75 0 00-.75-.75h-1.25z" 
-                                    clip-rule="evenodd"
-                                />
-                            </svg>
-                    
-                            <span>
-                                Use 8 or more characters with a mix of letters, numbers, and symbols (e.g. !@#).
-                            </span>
+                            <svg class="w-4 h-4 mt-[2px] flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-11.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM9.25 8.5a.75.75 0 000 1.5h.5v4.25a.75.75 0 001.5 0V9.25a.75.75 0 00-.75-.75h-1.25z"/></svg>
+                            <span>Use 8 or more characters with a mix of letters, numbers, and symbols (e.g. !@#).</span>
                         </p>
                     </div>
 
-                    <!-- Confirm Password Field -->
                     <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Confirm Password<span class="text-red-500">*</span>
-                        </label>
-                    
-                        <input 
-                            type="password" 
-                            id="confirmPassword" 
-                            placeholder="Re-enter your password"
-                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl 
-                                   focus:outline-none focus:border-blue-500 
-                                   focus:ring-4 focus:ring-blue-100 transition-all"
-                            required
-                        >
-                    
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Confirm Password<span class="text-red-500">*</span></label>
+                        <input type="password" id="confirmPassword" placeholder="Confirm password" class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none transition-all">
+                        <p id="confirm-error" class="hidden text-red-500 text-xs mt-2 font-medium"></p>
                         <p class="ms-2 mt-2 flex items-start gap-2 text-sm text-blue-600">
-                            <svg 
-                                xmlns="http://www.w3.org/2000/svg" 
-                                viewBox="0 0 20 20" 
-                                fill="currentColor" 
-                                class="w-4 h-4 mt-[2px] flex-shrink-0"
-                                aria-hidden="true"
-                            >
-                                <path 
-                                    fill-rule="evenodd" 
-                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-11.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM9.25 8.5a.75.75 0 000 1.5h.5v4.25a.75.75 0 001.5 0V9.25a.75.75 0 00-.75-.75h-1.25z" 
-                                    clip-rule="evenodd"
-                                />
-                            </svg>
-                    
-                            <span>
-                                Make sure both passwords match.
-                            </span>
+                            <svg class="w-4 h-4 mt-[2px] flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-11.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM9.25 8.5a.75.75 0 000 1.5h.5v4.25a.75.75 0 001.5 0V9.25a.75.75 0 00-.75-.75h-1.25z"/></svg>
+                            <span>Make sure both passwords match.</span>
                         </p>
                     </div>
 
-                    <!-- Register Button -->
-                    <button 
-                        type="submit" 
-                        id="registerBtn"
-                        class="w-full py-3.5 bg-gray-300 text-white font-semibold rounded-full transition-all cursor-not-allowed"
-                        disabled
-                    >
-                        Create Account
-                    </button>
+                    <button type="submit" id="registerBtn" class="w-full py-3.5 bg-gray-300 text-white font-semibold rounded-full transition-all cursor-not-allowed" disabled>Create Account</button>
 
-                    <!-- Login Link -->
                     <div class="text-center mt-6 text-sm text-gray-600">
-                        Already have an account?
-                        <a href="/login" class="text-blue-600 font-semibold hover:underline">
-                            Log In
-                        </a>
+                        Already have an account? <a href="/login" class="text-blue-600 font-semibold hover:underline">Log In</a>
                     </div>
                 </form>
             </div>
@@ -187,91 +90,114 @@
 
 
 <script>
+    const snackbarContainer = document.getElementById('snackbar-container');
+    const registerForm = document.getElementById('registerForm');
     const usernameInput = document.getElementById('username');
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
-    const confirmPasswordInput = document.getElementById('confirmPassword');
+    const confirmInput = document.getElementById('confirmPassword');
     const registerBtn = document.getElementById('registerBtn');
-    const registerForm = document.getElementById('registerForm');
-    const message = document.getElementById('message');
 
-    function checkInputs() {
-        const allFilled = usernameInput.value.trim() !== '' && 
-                         emailInput.value.trim() !== '' && 
-                         passwordInput.value.trim() !== '' && 
-                         confirmPasswordInput.value.trim() !== '';
-        
-        if (allFilled) {
-            registerBtn.disabled = false;
-            registerBtn.classList.remove('bg-gray-300', 'cursor-not-allowed');
-            registerBtn.classList.add('bg-gradient-to-r', 'from-blue-600', 'to-blue-700', 'hover:shadow-lg', 'hover:-translate-y-0.5', 'cursor-pointer');
+    function showSnackbar(title, message, type = 'success') {
+        const id = Date.now();
+        const bgColor = type === 'success' ? 'bg-[#EBFBEE]' : 'bg-[#FFF5F5]';
+        const borderColor = type === 'success' ? 'border-[#D3F9D8]' : 'border-[#FFE3E3]';
+        const textColor = type === 'success' ? 'text-[#2B8A3E]' : 'text-[#C92A2A]';
+        const icon = type === 'success' ? 
+            `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/></svg>` :
+            `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"/></svg>`;
+
+        const html = `
+            <div id="snack-${id}" class="${bgColor} border ${borderColor} ${textColor} p-4 rounded-xl shadow-lg flex items-start gap-3 min-w-[320px] animate-fadeIn">
+                <div class="mt-0.5">${icon}</div>
+                <div class="flex-1 text-sm"><p class="font-bold">${title}!</p><p class="text-xs opacity-90">${message}</p></div>
+                <button onclick="this.parentElement.remove()" class="opacity-50 hover:opacity-100">&times;</button>
+            </div>`;
+        snackbarContainer.insertAdjacentHTML('beforeend', html);
+        setTimeout(() => document.getElementById(`snack-${id}`)?.remove(), 5000);
+    }
+
+    function setFieldUI(input, errorId, status, message = "") {
+        const errorEl = document.getElementById(errorId);
+        input.classList.remove('border-red-400', 'bg-red-50', 'border-green-500', 'bg-green-50', 'border-gray-300');
+        if(errorEl) errorEl.classList.add('hidden');
+
+        if (status === 'error') {
+            input.classList.add('border-red-400', 'bg-red-50');
+            if(errorEl) { errorEl.textContent = "⚠️ " + message; errorEl.classList.remove('hidden'); }
+        } else if (status === 'success') {
+            input.classList.add('border-green-500', 'bg-green-50');
         } else {
-            registerBtn.disabled = true;
-            registerBtn.classList.add('bg-gray-300', 'cursor-not-allowed');
-            registerBtn.classList.remove('bg-gradient-to-r', 'from-blue-600', 'to-blue-700', 'hover:shadow-lg', 'hover:-translate-y-0.5', 'cursor-pointer');
+            input.classList.add('border-gray-300');
         }
     }
 
-    usernameInput.addEventListener('input', checkInputs);
-    emailInput.addEventListener('input', checkInputs);
-    passwordInput.addEventListener('input', checkInputs);
-    confirmPasswordInput.addEventListener('input', checkInputs);
+    const checkInputs = () => {
+        const isFilled = usernameInput.value.trim() && emailInput.value.trim() && passwordInput.value.trim() && confirmInput.value.trim();
+        registerBtn.disabled = !isFilled;
+        registerBtn.className = isFilled ? "w-full py-3.5 bg-blue-600 text-white font-semibold rounded-full cursor-pointer hover:bg-blue-700" : "w-full py-3.5 bg-gray-300 text-white font-semibold rounded-full cursor-not-allowed";
+    };
+
+    [usernameInput, emailInput, passwordInput, confirmInput].forEach(input => {
+        input.addEventListener('input', () => {
+            const errorId = input.id === 'confirmPassword' ? 'confirm-error' : `${input.id}-error`;
+            setFieldUI(input, errorId, 'neutral');
+            checkInputs();
+        });
+    });
 
     registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-
-        // Check if passwords match
-        if (passwordInput.value !== confirmPasswordInput.value) {
-            message.textContent = 'Passwords do not match!';
-            message.className = 'mb-4 p-3 rounded-lg text-center font-medium bg-red-100 text-red-700';
-            message.classList.remove('hidden');
+        
+        // Validasi client-side
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value)) {
+            setFieldUI(emailInput, 'email-error', 'error', 'Please enter a valid email address.');
+            return;
+        }
+        if (confirmInput.value !== passwordInput.value) {
+            setFieldUI(confirmInput, 'confirm-error', 'error', 'Passwords do not match.');
             return;
         }
 
-        const payload = {
-            username: usernameInput.value,
-            email: emailInput.value,
-            password: passwordInput.value
-        };
+        registerBtn.disabled = true;
+        registerBtn.innerText = "Creating Account...";
 
         try {
             const res = await fetch('/api/v1/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({
+                    username: usernameInput.value,
+                    email: emailInput.value,
+                    password: passwordInput.value
+                })
             });
 
+            // LOGIKA PERBAIKAN: Selalu baca JSON dulu
             const data = await res.json();
 
-            // Check HTTP status code (201 = Created, 200 = OK)
-            if (res.ok || res.status === 201) {
-                message.textContent = 'Register berhasil 🎉';
-                message.className = 'mb-4 p-3 rounded-lg text-center font-medium bg-green-100 text-green-700';
-                message.classList.remove('hidden');
-
-                setTimeout(() => {
-                    window.location.href = '/login';
-                }, 1500);
+            // Cek properti status dari data JSON (sesuai gambar DevTools Anda)
+            if (data.status === true) {
+                [usernameInput, emailInput, passwordInput, confirmInput].forEach(el => setFieldUI(el, "", "success"));
+                showSnackbar('Success', 'Account created successfully!', 'success');
+                setTimeout(() => window.location.href = '/login', 1500);
             } else {
-                message.textContent = data.message || 'Registration failed';
-                message.className = 'mb-4 p-3 rounded-lg text-center font-medium bg-red-100 text-red-700';
-                message.classList.remove('hidden');
+                // Penanganan Error dari Backend
+                const errorMsg = data.message || "Registration failed";
+                if (errorMsg === "User already exists.") {
+                    setFieldUI(usernameInput, 'username-error', 'error', 'This username is already taken. Try another one!');
+                    setFieldUI(emailInput, 'email-error', 'error', 'This email is already linked to an account.');
+                }
+                showSnackbar('Failed', errorMsg, 'error');
+                registerBtn.disabled = false;
+                registerBtn.innerText = "Create Account";
             }
-        } catch (error) {
-            message.textContent = 'Network error. Please try again.';
-            message.className = 'mb-4 p-3 rounded-lg text-center font-medium bg-red-100 text-red-700';
-            message.classList.remove('hidden');
+        } catch (err) {
+            showSnackbar('Failed', 'Network error. Try again later.', 'error');
+            registerBtn.disabled = false;
+            registerBtn.innerText = "Create Account";
         }
     });
 </script>
-
-<style>
-    @media (max-width: 768px) {
-        .max-w-7xl {
-            grid-template-columns: 1fr;
-        }
-    }
-</style>
-
 </body>
 </html>

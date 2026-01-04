@@ -21,8 +21,7 @@
                 <div class="flex items-center gap-3">
                     <!-- Show From Dropdown -->
                     <div class="flex items-center gap-2">
-                        <span class="text-sm text-gray-600">Show from</span>
-                        <select id="items-per-page" class="px-3 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+                        <span class="text-sm text-gray-400">Show from</span> <select id="items-per-page" class="bg-transparent px-2 py-1.5 text-sm text-gray-500 focus:outline-none border-none cursor-pointer">
                             <option value="5">1 to 5</option>
                             <option value="8" selected>1 to 8</option>
                             <option value="10">1 to 10</option>
@@ -55,32 +54,37 @@
             </div>
 
             <!-- Pagination -->
-            <div id="pagination-container" class="hidden mt-6 pt-4 border-t border-gray-200">
-                <div class="flex items-center justify-center">
-                    <!-- Pagination Buttons -->
-                    <div class="flex items-center gap-1">
-                        <button id="prev-btn" class="w-8 h-8 flex items-center justify-center border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                            <i class="fas fa-chevron-left text-xs"></i>
-                        </button>
-                        
-                        <div id="page-numbers" class="flex items-center gap-1">
-                            <!-- Page numbers will be inserted here -->
-                        </div>
-                        
-                        <button id="next-btn" class="w-8 h-8 flex items-center justify-center border border-gray-300 rounded text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                            <i class="fas fa-chevron-right text-xs"></i>
-                        </button>
-                        
-                        <span id="total-pages" class="ml-2 text-sm text-gray-600"></span>
+            <div id="pagination-container" class="hidden mt-10 flex justify-end items-center gap-4">
+                <div id="page-numbers" class="flex items-center gap-2">
                     </div>
+                
+                <div class="flex items-center gap-1 ml-2">
+                    <button id="prev-btn" class="text-gray-400 hover:text-blue-500 transition disabled:opacity-30">
+                        <i class="fas fa-chevron-left text-xs"></i>
+                    </button>
+                    <button id="next-btn" class="text-gray-400 hover:text-blue-500 transition disabled:opacity-30">
+                        <i class="fas fa-chevron-right text-xs"></i>
+                    </button>
+                    <button class="text-gray-400 hover:text-blue-500 transition ml-1">
+                        <i class="fas fa-angle-double-right text-xs"></i>
+                    </button>
+                    <span id="total-pages-display" class="text-sm text-gray-400 ml-2">72</span>
                 </div>
             </div>
         </div>
     </main>
-    <%- include('./partials/footer') -%>
+    <%- include('./partials/footer2') -%>
+
+    <%- include('./partials/qrmodal') %>
+
+    <%- include('./partials/editmodal') %>
+
+    <%- include('./partials/deletemodal') %>
 
 </body>
+    
 <script>
+    // --- 1. KONFIGURASI GLOBAL ---
     const API_URL = 'http://localhost:8000/api/v1/links/my-links';
     const BASE_SHORT_URL = 'https://surl.jiwamu.de/';
     
@@ -88,303 +92,248 @@
     let filteredLinks = [];
     let currentPage = 1;
     let itemsPerPage = 8;
+    let currentDeleteId = null;
 
-    // Format date to Indonesian format
+    const modalEdit = document.getElementById('editModal');
+    const modalQR = document.getElementById('qrModal'); 
+    const modalDelete = document.getElementById('deleteModal');
+    const container = document.getElementById('links-container');
+
+    // --- 2. FUNGSI UTILITAS ---
     function formatDate(dateString) {
         const date = new Date(dateString);
-        const day = date.getDate();
-        const months = ['Desember', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
+        const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
                       'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-        const year = date.getFullYear();
-        return `${day} ${months[date.getMonth()]} ${year}`;
+        return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
     }
 
-    // Copy to clipboard
     function copyToClipboard(text) {
         navigator.clipboard.writeText(text).then(() => {
             alert('Link berhasil disalin!');
-        }).catch(err => {
-            console.error('Error copying:', err);
-        });
+        }).catch(err => console.error('Error copying:', err));
     }
 
-    // Toggle dropdown - handled by event delegation
+    // --- 3. LOGIKA MODAL ---
+    function openEditModal(linkData) {
+        if (!modalEdit) return;
+        document.getElementById('editLinkId').value = linkData.id || '';
+        document.getElementById('editCustomKey').value = linkData.short_key || '';
+        document.getElementById('editRedirectUri').value = linkData.redirect_uri || '';
+        const type = linkData.rules?.expire_type || 'max_click';
+        document.getElementById('editRulesType').value = type;
+        document.getElementById('editMaxClick').value = linkData.rules?.max_click || 0;
+        if (linkData.rules?.expire_date) {
+            document.getElementById('editExpireDate').value = linkData.rules.expire_date.split('T')[0];
+        }
+        document.getElementById('editRulesType').dispatchEvent(new Event('change'));
+        modalEdit.classList.replace('hidden', 'flex');
+        document.body.style.overflow = 'hidden';
+    }
 
-    // Create link item HTML
-    function createLinkItem(link) {
-        const shortUrl = `${BASE_SHORT_URL}${link.short_key}`;
+    function openDeleteModal(id) {
+        currentDeleteId = id;
+        modalDelete.classList.replace('hidden', 'flex');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeDeleteModal() {
+        currentDeleteId = null;
+        modalDelete.classList.replace('flex', 'hidden');
+        document.body.style.overflow = 'auto';
+    }
+
+    window.closeModal = () => {
+        if (modalEdit) modalEdit.classList.replace('flex', 'hidden');
+        if (modalQR) modalQR.classList.replace('flex', 'hidden');
+        document.body.style.overflow = 'auto';
+    };
+
+    // --- 4. EVENT LISTENERS ---
+    document.addEventListener('DOMContentLoaded', () => {
+        loadLinks();
+
+        document.addEventListener('click', (e) => {
+            const dropToggle = e.target.closest('.dropdown-toggle');
+            const editBtn = e.target.closest('.btn-trigger-edit');
+            const deleteBtn = e.target.closest('.btn-trigger-delete');
+
+            if (dropToggle) {
+                e.preventDefault(); e.stopPropagation();
+                const menu = dropToggle.nextElementSibling;
+                document.querySelectorAll('.dropdown-menu').forEach(m => m !== menu && m.classList.add('hidden'));
+                menu.classList.toggle('hidden');
+                return;
+            }
+
+            if (editBtn) {
+                const linkData = allLinks.find(item => item.id === editBtn.dataset.id);
+                if (linkData) openEditModal(linkData);
+                document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.add('hidden'));
+                return;
+            }
+
+            if (deleteBtn) {
+                openDeleteModal(deleteBtn.dataset.id);
+                document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.add('hidden'));
+                return;
+            }
+
+            if (!e.target.closest('.dropdown-menu')) {
+                document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.add('hidden'));
+            }
+
+            if (e.target === modalEdit || e.target === modalQR) closeModal();
+            if (e.target === modalDelete) closeDeleteModal();
+        });
+
+        document.getElementById('editRulesType')?.addEventListener('change', function() {
+            document.getElementById('containerMaxClick').classList.toggle('hidden', this.value !== 'max_click');
+            document.getElementById('containerExpireDate').classList.toggle('hidden', this.value !== 'expire_date');
+        });
+
+        document.getElementById('confirmDeleteBtn')?.addEventListener('click', async () => {
+            if (!currentDeleteId) return;
+            try {
+                const res = await fetch(`${API_URL.replace('/my-links', '')}/${currentDeleteId}/delete`, { method: 'DELETE' });
+                const result = await res.json();
+                if (result.status) {
+                    closeDeleteModal();
+                    loadLinks();
+                }
+            } catch (err) { alert('Gagal menghapus link'); }
+        });
+    });
+
+    // --- 5. RENDERING LOGIC (SESUAI GAMBAR) ---
+    function renderLinks() {
+        if (!container) return;
+        container.innerHTML = '';
         
-        return `
-            <div class="py-4 hover:bg-gray-50 transition relative group">
-                <div class="px-4">
-                    <p class="text-xs text-gray-400 mb-2">${formatDate(link.created_at)}</p>
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const pageLinks = filteredLinks.slice(startIndex, startIndex + itemsPerPage);
+
+        if (pageLinks.length === 0) {
+            container.innerHTML = `<div class="text-center p-10 text-gray-500">Tidak ada link ditemukan</div>`;
+            return;
+        }
+
+        let lastDate = "";
+        pageLinks.forEach(link => {
+            const currentDate = formatDate(link.created_at);
+            
+            // Penambahan Label Tanggal (Sesuai Gambar 2)
+            if (currentDate !== lastDate) {
+                container.innerHTML += `
+                    <div class="flex items-center gap-4 my-6">
+                        <span class="text-xs font-medium text-gray-400 whitespace-nowrap">${currentDate}</span>
+                        <div class="h-[1px] w-full bg-gray-100"></div>
+                    </div>`;
+                lastDate = currentDate;
+            }
+
+            const shortUrl = `${BASE_SHORT_URL}${link.short_key}`;
+            container.innerHTML += `
+                <div class="group py-4 transition-all">
                     <div class="flex items-center justify-between">
                         <div class="flex-1">
                             <div class="flex items-center gap-2 mb-1">
-                                <a href="${shortUrl}" target="_blank" class="text-blue-600 hover:underline font-medium text-sm">
-                                    ${shortUrl}
-                                </a>
-                                <button onclick="copyToClipboard('${shortUrl}')" class="text-blue-400 hover:text-blue-600">
-                                    <i class="far fa-copy text-xs"></i>
+                                <a href="${shortUrl}" target="_blank" class="text-blue-600 hover:underline font-medium text-sm">${shortUrl}</a>
+                                <button onclick="copyToClipboard('${shortUrl}')" class="text-blue-400 hover:text-blue-600 transition">
+                                    <i class="far fa-copy text-sm"></i>
                                 </button>
                             </div>
-                            <p class="text-xs text-gray-400">from : ${link.redirect_uri}</p>
+                            <p class="text-[11px] text-gray-400 italic">from : ${link.redirect_uri}</p>
                         </div>
-                        <div class="flex items-center gap-2 ml-4">
-                            <button class="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition">
-                                <i class="far fa-clone text-sm"></i>
-                            </button>
-                            <button class="w-8 h-8 flex items-center justify-center bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition">
+                        
+                        <div class="flex items-center gap-3">
+                            <a href="/analytics/${link.id}" class="w-9 h-9 flex items-center justify-center bg-cyan-50 text-cyan-600 rounded-xl hover:bg-cyan-100 transition">
                                 <i class="fas fa-chart-simple text-sm"></i>
+                            </a>
+
+                            <button onclick="openQRModal('${link.id}')" class="w-9 h-9 flex items-center justify-center bg-cyan-50 text-cyan-600 rounded-xl hover:bg-cyan-100 transition">
+                                <i class="fas fa-qrcode text-sm"></i>
                             </button>
+
                             <div class="relative">
-                                <button class="dropdown-toggle w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded transition">
-                                    <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
+                                <button class="dropdown-toggle w-9 h-9 flex items-center justify-center text-gray-400 hover:bg-gray-100 rounded-xl transition">
+                                    <i class="fas fa-chevron-down text-xs"></i>
                                 </button>
-                                <!-- Dropdown Menu -->
-                                <div class="dropdown-menu hidden absolute right-0 top-10 bg-white rounded-lg shadow-lg border border-gray-200 py-2 w-16 z-50">
-                                    <button class="w-full px-3 py-2 flex flex-col items-center justify-center hover:bg-gray-50 text-blue-500 gap-1">
+                                
+                                <div class="dropdown-menu hidden absolute left-1/2 -translate-x-1/2 mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 py-1 w-14 z-[999] overflow-hidden">
+                                    
+                                    <button data-id="${link.id}" class="btn-trigger-edit w-full py-3 flex items-center justify-center hover:bg-blue-50 text-blue-500 transition">
                                         <i class="far fa-edit text-lg"></i>
                                     </button>
-                                    <button class="w-full px-3 py-2 flex flex-col items-center justify-center hover:bg-gray-50 text-blue-500 gap-1">
+                                    
+                                    <button data-id="${link.id}" class="btn-trigger-delete w-full py-3 flex items-center justify-center hover:bg-blue-50 text-blue-600 transition border-t border-gray-50">
                                         <i class="far fa-trash-alt text-lg"></i>
                                     </button>
+                                    
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        `;
-    }
+                </div>`;
+        });
 
-    // Render pagination
-    function renderPagination() {
-        const totalPages = Math.ceil(filteredLinks.length / itemsPerPage);
-        const pageNumbers = document.getElementById('page-numbers');
-        const prevBtn = document.getElementById('prev-btn');
-        const nextBtn = document.getElementById('next-btn');
-        const totalPagesSpan = document.getElementById('total-pages');
-        
-        if (!pageNumbers || !prevBtn || !nextBtn || !totalPagesSpan) return;
-        
-        // Clear existing page numbers
-        pageNumbers.innerHTML = '';
-        
-        // Show total pages
-        totalPagesSpan.textContent = totalPages;
-        
-        // Calculate page range to display (max 5 pages)
-        let startPage = Math.max(1, currentPage - 2);
-        let endPage = Math.min(totalPages, startPage + 4);
-        
-        // Adjust start if we're near the end
-        if (endPage - startPage < 4) {
-            startPage = Math.max(1, endPage - 4);
-        }
-        
-        // Add page numbers
-        for (let i = startPage; i <= endPage; i++) {
-            const activeClass = i === currentPage 
-                ? 'bg-blue-500 text-white border-blue-500' 
-                : 'hover:bg-gray-50 border-gray-300 text-gray-700';
-            pageNumbers.innerHTML += `
-                <button onclick="goToPage(${i})" class="w-8 h-8 flex items-center justify-center border rounded text-sm ${activeClass}">${i}</button>
-            `;
-        }
-        
-        // Add dots and last page if needed
-        if (endPage < totalPages - 1) {
-            pageNumbers.innerHTML += `<span class="px-2 text-gray-400">...</span>`;
-        }
-        if (endPage < totalPages) {
-            pageNumbers.innerHTML += `
-                <button onclick="goToPage(${totalPages})" class="w-8 h-8 flex items-center justify-center border border-gray-300 rounded text-sm hover:bg-gray-50 text-gray-700">${totalPages}</button>
-            `;
-        }
-        
-        // Update prev/next buttons
-        prevBtn.disabled = currentPage === 1;
-        nextBtn.disabled = currentPage === totalPages || totalPages === 0;
-    }
-
-    // Go to specific page
-    function goToPage(page) {
-        currentPage = page;
-        renderLinks();
-    }
-
-    // Render links for current page
-    function renderLinks() {
-        const container = document.getElementById('links-container');
-        const paginationContainer = document.getElementById('pagination-container');
-        
-        if (!container || !paginationContainer) return;
-        
-        if (filteredLinks.length === 0) {
-            container.innerHTML = `
-                <div class="text-center p-10 text-gray-500">
-                    <i class="fas fa-link text-4xl mb-3"></i>
-                    <p>Tidak ada link yang ditemukan</p>
-                </div>
-            `;
-            paginationContainer.classList.add('hidden');
-            return;
-        }
-        
-        // Calculate start and end indices
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        const endIndex = Math.min(startIndex + itemsPerPage, filteredLinks.length);
-        const pageLinks = filteredLinks.slice(startIndex, endIndex);
-        
-        // Create HTML for each link
-        const linksHTML = pageLinks.map((link) => createLinkItem(link)).join('');
-        container.innerHTML = linksHTML;
-        
-        // Show pagination
-        paginationContainer.classList.remove('hidden');
+        document.getElementById('pagination-container')?.classList.toggle('hidden', filteredLinks.length === 0);
         renderPagination();
     }
 
-    // Search functionality
-    function handleSearch() {
-        const searchInput = document.getElementById('search-input');
-        if (!searchInput) return;
-        
-        const searchTerm = searchInput.value.toLowerCase();
-        
-        if (searchTerm === '') {
-            filteredLinks = [...allLinks];
-        } else {
-            filteredLinks = allLinks.filter(link => 
-                link.short_key.toLowerCase().includes(searchTerm) ||
-                link.redirect_uri.toLowerCase().includes(searchTerm) ||
-                formatDate(link.created_at).toLowerCase().includes(searchTerm)
-            );
-        }
-        
-        currentPage = 1;
-        renderLinks();
-    }
-
-    // Change items per page
-    function handleItemsPerPageChange() {
-        const select = document.getElementById('items-per-page');
-        if (!select) return;
-        
-        itemsPerPage = parseInt(select.value);
-        currentPage = 1;
-        renderLinks();
-    }
-
-    // Fetch and display links
+    // --- FUNGSI SEARCH & PAGINATION (Tetap Sama) ---
     async function loadLinks() {
-        const container = document.getElementById('links-container');
-        const loading = document.getElementById('loading');
-        
-        if (!container || !loading) return;
-        
         try {
-            const response = await fetch(API_URL);
-            
-            if (!response.ok) {
-                throw new Error('Failed to fetch links');
-            }
-            
-            const result = await response.json();
-            
-            // Hide loading
-            loading.style.display = 'none';
-            
-            if (result.status && result.data && result.data.length > 0) {
+            const res = await fetch(API_URL);
+            const result = await res.json();
+            if (document.getElementById('loading')) document.getElementById('loading').style.display = 'none';
+            if (result.status && result.data) {
                 allLinks = result.data;
                 filteredLinks = [...allLinks];
                 renderLinks();
-            } else {
-                container.innerHTML = `
-                    <div class="text-center p-10 text-gray-500">
-                        <i class="fas fa-link text-4xl mb-3"></i>
-                        <p>Tidak ada link yang tersedia</p>
-                    </div>
-                `;
             }
-        } catch (error) {
-            console.error('Error loading links:', error);
-            loading.style.display = 'none';
-            container.innerHTML = `
-                <div class="text-center p-10 text-red-500">
-                    <i class="fas fa-exclamation-circle text-4xl mb-3"></i>
-                    <p>Gagal memuat data</p>
-                    <button onclick="loadLinks()" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                        Coba Lagi
-                    </button>
-                </div>
+        } catch (err) { console.error('Fetch error:', err); }
+    }
+
+    function renderPagination() {
+    const totalPages = Math.ceil(filteredLinks.length / itemsPerPage);
+    const pageNumbers = document.getElementById('page-numbers');
+    if (!pageNumbers) return;
+    
+    pageNumbers.innerHTML = '';
+    
+    // Tampilkan teks total halaman di sebelah kanan
+    const totalDisplay = document.getElementById('total-pages-display');
+    if (totalDisplay) totalDisplay.textContent = totalPages || 1;
+
+    // Loop angka halaman
+    for (let i = 1; i <= totalPages; i++) {
+        // Hanya tampilkan beberapa angka jika halaman terlalu banyak (Opsional)
+        if (i === 1 || i === 2 || i === 3 || i === currentPage) {
+            const isActive = i === currentPage;
+            const activeClass = isActive 
+                ? 'bg-cyan-100 text-cyan-600 font-bold' // Bulat biru muda untuk yang aktif
+                : 'text-gray-400 hover:text-gray-600';
+                
+            pageNumbers.innerHTML += `
+                <button onclick="goToPage(${i})" class="w-8 h-8 flex items-center justify-center rounded-full text-sm transition ${activeClass}">
+                    ${i}
+                </button>
             `;
         }
     }
 
-    // Close dropdowns when clicking outside
-    document.addEventListener('click', (event) => {
-        const isDropdownToggle = event.target.closest('.dropdown-toggle');
-        const isDropdownMenu = event.target.closest('.dropdown-menu');
-        
-        if (isDropdownToggle) {
-            event.stopPropagation();
-            const dropdown = isDropdownToggle.nextElementSibling;
-            
-            // Close all other dropdowns
-            document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                if (menu !== dropdown) {
-                    menu.classList.add('hidden');
-                }
-            });
-            
-            // Toggle current dropdown
-            if (dropdown) {
-                dropdown.classList.toggle('hidden');
-            }
-        } else if (!isDropdownMenu) {
-            // Close all dropdowns when clicking outside
-            document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                menu.classList.add('hidden');
-            });
-        }
-    });
+    // Update status tombol navigasi
+    document.getElementById('prev-btn').disabled = currentPage === 1;
+    document.getElementById('next-btn').disabled = currentPage === totalPages || totalPages === 0;
+}
 
-    // Event listeners with null checks
-    document.addEventListener('DOMContentLoaded', function() {
-        const searchInput = document.getElementById('search-input');
-        const itemsPerPageSelect = document.getElementById('items-per-page');
-        const prevBtn = document.getElementById('prev-btn');
-        const nextBtn = document.getElementById('next-btn');
-        
-        if (searchInput) {
-            searchInput.addEventListener('input', handleSearch);
-        }
-        
-        if (itemsPerPageSelect) {
-            itemsPerPageSelect.addEventListener('change', handleItemsPerPageChange);
-        }
-        
-        if (prevBtn) {
-            prevBtn.addEventListener('click', () => {
-                if (currentPage > 1) {
-                    goToPage(currentPage - 1);
-                }
-            });
-        }
-        
-        if (nextBtn) {
-            nextBtn.addEventListener('click', () => {
-                const totalPages = Math.ceil(filteredLinks.length / itemsPerPage);
-                if (currentPage < totalPages) {
-                    goToPage(currentPage + 1);
-                }
-            });
-        }
-        
-        // Load links when page loads
-        loadLinks();
-    });
-</script> 
+    function goToPage(page) { currentPage = page; renderLinks(); window.scrollTo({top: 0, behavior: 'smooth'}); }
+
+    function handleSearch() {
+        const term = document.getElementById('search-input').value.toLowerCase();
+        filteredLinks = allLinks.filter(l => l.short_key.toLowerCase().includes(term) || l.redirect_uri.toLowerCase().includes(term));
+        currentPage = 1;
+        renderLinks();
+    }
+</script>
 </html>

@@ -6,7 +6,7 @@ module.exports = async function linkOwnership(req, res, next) {
   try {
     // get id
     const userId = req.user.id;
-    const linkId = req.params.id;
+    const linkId = req.params.id || req.params.link_id;
 
     if (!linkId) return res.status(400).json({ message: 'Link ID required' });
 

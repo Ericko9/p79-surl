@@ -89,6 +89,12 @@ const getLinkDetail = asyncHandler(async (req, res) => {
         expire_date: data.rules.expireDate,
         max_click: data.rules.maxClick,
       },
+      qr_code: data.qrCode
+        ? {
+            image_path: data.qrCode.imagePath,
+            format: data.qrCode.format,
+          }
+        : null,
     },
   });
 });
@@ -141,10 +147,23 @@ const deleteLink = asyncHandler(async (req, res) => {
 const redirect = asyncHandler(async (req, res) => {
   const { shortKey } = req.params;
 
-  // call getRedirectUrl service
-  const redirectUri = await linkService.getRedirectUrl(shortKey);
+  // get metadata dari request
+  const ip =
+    req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
+  const userAgent = req.headers['user-agent'];
+  const referrer = req.headers['referer'] || null;
 
-  res.redirect(redirectUri);
+  // call getRedirectUrl service
+  const link = await linkService.getRedirectUrl(shortKey);
+
+  // insert data analytics di background
+  linkService
+    .recordAnalytics(link.id, { ip, userAgent, referrer })
+    .catch((err) => {
+      console.error('Failed to record analytics:', err);
+    });
+
+  res.redirect(link.redirectUri);
 });
 
 const generateQr = asyncHandler(async (req, res) => {
@@ -164,6 +183,29 @@ const generateQr = asyncHandler(async (req, res) => {
   });
 });
 
+const getQrDetail = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const qrData = await linkService.getQrByLinkId(id);
+
+  // membuat url download
+  const downloadUrl = qrData.imagePath.replace(
+    '/upload/',
+    '/upload/fl_attachment/'
+  );
+
+  return res.status(200).json({
+    status: true,
+    data: {
+      image_path: qrData.imagePath,
+      download_url: downloadUrl,
+      format: qrData.format,
+      is_generated: qrData.isGenerated,
+      created_at: qrData.createdAt,
+    },
+  });
+});
+
 module.exports = {
   createLink,
   getMyLinks,
@@ -172,4 +214,5 @@ module.exports = {
   deleteLink,
   redirect,
   generateQr,
+  getQrDetail,
 };
