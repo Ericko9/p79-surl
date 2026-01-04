@@ -1,58 +1,53 @@
-const getRange = (period, customStart, customEnd) => {
-  const now = new Date();
+const AppError = require('./app-error.helper');
+
+const getRange = (period, timezoneOffset = 0, customStart, customEnd) => {
   let start;
   let end;
 
-  const todayUTC = new Date(
-    Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate(),
-      0,
-      0,
-      0,
-      0
-    )
-  );
+  const getUserTodayStart = () => {
+    const date = new Date();
+    const userNow = new Date(date.getTime() - timezoneOffset * 60000);
+    userNow.setUTCHours(0, 0, 0, 0);
+
+    return new Date(userNow.getTime() + timezoneOffset * 60000);
+  };
+
+  const todayStart = getUserTodayStart();
 
   switch (period) {
     case 'today':
-      start = todayUTC;
-      end = new Date(todayUTC);
-      end.setUTCHours(23, 59, 59, 999);
+      start = todayStart;
+      end = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000 - 1);
       break;
 
     case 'last_7_days':
-      start = new Date(todayUTC);
-      start.setUTCDate(start.getUTCDate() - 6);
-      end = new Date(todayUTC);
-      end.setUTCHours(23, 59, 59, 999);
+      start = new Date(todayStart.getTime() - 6 * 24 * 60 * 60 * 1000);
+      end = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000 - 1);
       break;
 
     case 'last_30_days':
-      start = new Date(todayUTC);
-      start.setUTCDate(start.getUTCDate() - 29);
-      end = new Date(todayUTC);
-      end.setUTCHours(23, 59, 59, 999);
+      start = new Date(todayStart.getTime() - 29 * 24 * 60 * 60 * 1000);
+      end = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000 - 1);
       break;
 
     case 'last_90_days':
-      start = new Date(todayUTC);
-      start.setUTCDate(start.getUTCDate() - 89);
-      end = new Date(todayUTC);
-      end.setUTCHours(23, 59, 59, 999);
+      start = new Date(todayStart.getTime() - 89 * 24 * 60 * 60 * 1000);
+      end = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000 - 1);
       break;
 
     case 'custom':
-      if (!customStart || !customEnd) {
+      if (!customStart || !customEnd)
         throw new Error('Custom range requires start & end');
-      }
-      start = new Date(`${customStart}T00:00:00.000Z`);
-      end = new Date(`${customEnd}T23:59:59.999Z`);
+
+      const s = new Date(`${customStart}T00:00:00Z`);
+      start = new Date(s.getTime() + timezoneOffset * 60000);
+
+      const e = new Date(`${customEnd}T23:59:59.999Z`);
+      end = new Date(e.getTime() + timezoneOffset * 60000);
       break;
 
     default:
-      throw new Error('Invalid period');
+      throw new AppError('Invalid period', 400);
   }
 
   return {
@@ -61,20 +56,22 @@ const getRange = (period, customStart, customEnd) => {
   };
 };
 
-const formatLabel = (date, unit) => {
+const formatLabel = (date, unit, timezoneOffset = 0) => {
   const pad = (n) => n.toString().padStart(2, '0');
 
-  const y = date.getUTCFullYear();
-  const m = pad(date.getUTCMonth() + 1);
-  const d = pad(date.getUTCDate());
-  const h = pad(date.getUTCHours());
+  const localDate = new Date(date.getTime() - timezoneOffset * 60000);
+
+  const y = localDate.getUTCFullYear();
+  const m = pad(localDate.getUTCMonth() + 1);
+  const d = pad(localDate.getUTCDate());
+  const h = pad(localDate.getUTCHours());
 
   if (unit === 'hour') return `${y}-${m}-${d} ${h}`;
   if (unit === 'day') return `${y}-${m}-${d}`;
   if (unit === 'week') {
     const week = String(
       Math.floor(
-        (Date.UTC(y, date.getUTCMonth(), date.getUTCDate()) -
+        (Date.UTC(y, localDate.getUTCMonth(), localDate.getUTCDate()) -
           Date.UTC(y, 0, 1)) /
           86400000 /
           7
@@ -99,13 +96,13 @@ const advanceDate = (date, viewBy) => {
   return d;
 };
 
-const generateTimeSeries = (start, end, config, viewBy) => {
+const generateTimeSeries = (start, end, config, viewBy, timezoneOffset = 0) => {
   const series = [];
   let current = new Date(start);
   const finish = new Date(end);
 
   while (current <= finish) {
-    const label = formatLabel(current, config.label);
+    const label = formatLabel(current, config.label, timezoneOffset);
     series.push({ label, count: 0 });
 
     current = advanceDate(current, viewBy);
@@ -114,4 +111,4 @@ const generateTimeSeries = (start, end, config, viewBy) => {
   return series;
 };
 
-module.exports = { getRange, generateTimeSeries };
+module.exports = { getRange, generateTimeSeries, formatLabel };
