@@ -92,6 +92,7 @@ const advanceDate = (date, viewBy) => {
   else if (viewBy === 'daily') d.setUTCDate(d.getUTCDate() + 1);
   else if (viewBy === 'weekly') d.setUTCDate(d.getUTCDate() + 7);
   else if (viewBy === 'monthly') d.setUTCMonth(d.getUTCMonth() + 1);
+  else d.setUTCDate(d.getUTCDate() + 1);
 
   return d;
 };
@@ -101,11 +102,18 @@ const generateTimeSeries = (start, end, config, viewBy, timezoneOffset = 0) => {
   let current = new Date(start);
   const finish = new Date(end);
 
-  while (current <= finish) {
+  let safetyCounter = 0;
+
+  while (current <= finish && safetyCounter < 1000) {
     const label = formatLabel(current, config.label, timezoneOffset);
     series.push({ label, count: 0 });
 
     current = advanceDate(current, viewBy);
+    safetyCounter++;
+  }
+
+  if (safetyCounter >= 1000) {
+    console.warn('Warning: Time series loop reached safety limit!');
   }
 
   return series;

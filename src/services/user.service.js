@@ -21,7 +21,14 @@ const getProfile = async (userId) => {
   // cek apakah ada user profilenya
   if (!user) throw new Error('USER_NOT_FOUND');
 
-  return user;
+  const formattedUser = {
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    created_at: user.createdAt,
+  };
+
+  return formattedUser;
 };
 
 // UPDATE USER PROFILE
@@ -43,7 +50,7 @@ const updateProfile = async (userId, updateData) => {
       id: users.id,
       username: users.username,
       email: users.email,
-      updatedAt: users.updatedAt,
+      updated_at: users.updatedAt,
     });
 
   // cek apakah data user ada dan berhasil update

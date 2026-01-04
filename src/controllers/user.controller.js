@@ -122,19 +122,22 @@ const deleteUser = async (req, res) => {
 
 const resetPassword = asyncHandler(async (req, res) => {
   const { token } = req.query;
-  const { password, confirmPassword } = req.body;
+  const {
+    new_password: newPassword,
+    confirm_new_password: confirmNewPassword,
+  } = req.body;
 
   // cek field
-  if (password !== confirmPassword) {
+  if (newPassword !== confirmNewPassword) {
     throw new AppError('Passwords do not match.', 400);
   }
 
-  if (password.length < 8) {
+  if (newPassword.length < 8) {
     throw new AppError('Password must be at least 8 characters.', 400);
   }
 
   // call resetPassword service
-  await userService.resetPassword(token, password);
+  await userService.resetPassword(token, newPassword);
 
   res.status(200).json({
     status: true,
