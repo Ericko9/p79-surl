@@ -8,6 +8,8 @@ const asyncHandler = require('express-async-handler');
     3. Get Time Series
 */
 
+const getTimezoneOffset = (req) => parseInt(req.query.offset) || 0;
+
 const getSummary = asyncHandler(async (req, res) => {
   const { link_id: linkId } = req.params;
   const {
@@ -17,8 +19,15 @@ const getSummary = asyncHandler(async (req, res) => {
     custom_end: customEnd,
   } = req.query;
 
+  const timezoneOffset = getTimezoneOffset(req);
+
   // get value dari range tanggal berdasarkan filter
-  const { startDate, endDate } = getRange(period, customStart, customEnd);
+  const { startDate, endDate } = getRange(
+    period,
+    timezoneOffset,
+    customStart,
+    customEnd
+  );
 
   // call getSummary service
   const summary = await analyticsService.getSummary(
@@ -26,7 +35,8 @@ const getSummary = asyncHandler(async (req, res) => {
     startDate,
     endDate,
     viewBy,
-    period
+    period,
+    timezoneOffset
   );
 
   res.json({
@@ -43,8 +53,15 @@ const getLocation = asyncHandler(async (req, res) => {
     custom_end: customEnd,
   } = req.query;
 
+  const timezoneOffset = getTimezoneOffset(req);
+
   // get value dari range tanggal berdasarkan filter
-  const { startDate, endDate } = getRange(period, customStart, customEnd);
+  const { startDate, endDate } = getRange(
+    period,
+    timezoneOffset,
+    customStart,
+    customEnd
+  );
 
   // call getLocation service
   const locations = await analyticsService.getLocation(
@@ -70,15 +87,23 @@ const getTimeSeries = asyncHandler(async (req, res) => {
     custom_end: customEnd,
   } = req.query;
 
+  const timezoneOffset = getTimezoneOffset(req);
+
   // get value dari range tanggal berdasarkan filter
-  const { startDate, endDate } = getRange(period, customStart, customEnd);
+  const { startDate, endDate } = getRange(
+    period,
+    timezoneOffset,
+    customStart,
+    customEnd
+  );
 
   // call getTimeSeries service (sudah menangani zero-filling dan compare data)
   const chartData = await analyticsService.getTimeSeries(
     linkId,
     startDate,
     endDate,
-    viewBy
+    viewBy,
+    timezoneOffset
   );
 
   res.status(200).json({

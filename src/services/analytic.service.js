@@ -1,7 +1,7 @@
 const db = require('../configs/database');
 const { sql, eq, and, gte, lte, desc } = require('drizzle-orm');
 const { analytics } = require('../models/index');
-const { generateTimeSeries } = require('../utils/date.helper');
+const { generateTimeSeries, formatLabel } = require('../utils/date.helper');
 
 // VIEW BY CONFIG
 const VIEW_CONFIG = {
@@ -41,7 +41,8 @@ const getSummary = async (
   startDate,
   endDate,
   viewBy = 'daily',
-  period
+  period,
+  timezoneOffset = 0
 ) => {
   const allowedViewBy = ALLOWED_VIEW_BY[period] || ALLOWED_VIEW_BY.custom;
   const effectiveViewBy = allowedViewBy.includes(viewBy)
@@ -84,6 +85,7 @@ const getSummary = async (
 
   const divisor = getDivisor();
   const prevStartDate = new Date(start.getTime() - diffInMs).toISOString();
+  const prevEndDate = new Date(start.getTime() - 1).toISOString();
 
   // get value total visits (concurrent execution untuk optimalisasi)
   const [currentReq, prevReq] = await Promise.all([
@@ -104,7 +106,7 @@ const getSummary = async (
         and(
           eq(analytics.linkId, linkId),
           gte(analytics.accessedAt, prevStartDate),
-          lte(analytics.accessedAt, startDate)
+          lte(analytics.accessedAt, prevEndDate)
         )
       ),
   ]);
@@ -120,8 +122,13 @@ const getSummary = async (
       ? 100
       : 0;
 
+  // geser waktu di database ke waktu lokal user
+  const shiftedTimeSql = sql`datetime(${
+    analytics.accessedAt
+  }, ${-timezoneOffset} || ' minutes')`;
+
   // get value peak traffic
-  const groupBySql = sql`strftime(${config.format}, ${analytics.accessedAt})`;
+  const groupBySql = sql`strftime(${config.format}, ${shiftedTimeSql})`;
   const stats = await db
     .select({
       time: groupBySql,
@@ -146,15 +153,21 @@ const getSummary = async (
     const latestUnit = Number(stats[stats.length - 1].count);
     const previousUnit = Number(stats[stats.length - 2].count);
 
-    if (previousUnit > 0) {
-      microGrowth = ((latestUnit - previousUnit) / previousUnit) * 100;
-    } else if (latestUnit > 0) {
-      microGrowth = 100;
-    }
-  } else {
+    microGrowth =
+      previousUnit > 0
+        ? ((latestUnit - previousUnit) / previousUnit) * 100
+        : latestUnit > 0
+        ? 100
+        : 0;
+  } else if (stats.length === 1) {
     // jika baru ada 1 unit waktu yang tercatat
     // dibandingkan dengan 0 (maka naik 100%)
-    microGrowth = 100;
+    const latestUnit = Number(stats[0].count);
+
+    microGrowth = latestUnit > 0 ? 100 : 0;
+  } else {
+    // jika tidak ada data sama sekali di periode yang diacu
+    microGrowth = 0;
   }
 
   const peakRow =
@@ -273,7 +286,13 @@ const getLocation = async (linkId, startDate, endDate) => {
 };
 
 // GET TIME SERIES DATA FOR LINE CHART
-const getTimeSeries = async (linkId, startDate, endDate, viewBy) => {
+const getTimeSeries = async (
+  linkId,
+  startDate,
+  endDate,
+  viewBy,
+  timezoneOffset = 0
+) => {
   const config = VIEW_CONFIG[viewBy || 'daily'];
   const start = new Date(startDate);
   const end = new Date(endDate);
@@ -283,7 +302,11 @@ const getTimeSeries = async (linkId, startDate, endDate, viewBy) => {
   const prevStart = new Date(start.getTime() - diffInMs);
   const prevEnd = new Date(start.getTime() - 1);
 
-  const groupBySql = sql`strftime(${config.format}, ${analytics.accessedAt})`;
+  // geser waktu di database ke waktu lokal user
+  const shiftedTimeSql = sql`datetime(${
+    analytics.accessedAt
+  }, ${-timezoneOffset} || ' minutes')`;
+  const groupBySql = sql`strftime(${config.format}, ${shiftedTimeSql})`;
 
   // get value total visits current & previous (concurrent execution untuk optimalisasi)
   const [currentRows, prevRows] = await Promise.all([
@@ -313,11 +336,29 @@ const getTimeSeries = async (linkId, startDate, endDate, viewBy) => {
 
   // generate slot waktu dari current period
   // data previous period hanya dimapping ke slot yang sama by label
-  const currentSeries = generateTimeSeries(start, end, config, viewBy);
+  const currentSeries = generateTimeSeries(
+    start,
+    end,
+    config,
+    viewBy,
+    timezoneOffset
+  );
 
   // mapping data ke template
   const rowMap = new Map(currentRows.map((r) => [r.time, Number(r.count)]));
-  const prevMap = new Map(prevRows.map((r) => [r.time, Number(r.count)]));
+  const prevMap = new Map();
+  prevRows.forEach((r) => {
+    const originalDate = new Date(r.time.replace(' ', 'T') + ':00:00Z');
+    const relativeDate = new Date(originalDate.getTime() + diffInMs);
+
+    const relativeLabel = formatLabel(
+      relativeDate,
+      config.label,
+      timezoneOffset
+    );
+
+    prevMap.set(relativeLabel, Number(r.count));
+  });
 
   return currentSeries.map((s) => ({
     display_label: s.label,
